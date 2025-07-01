@@ -25,26 +25,35 @@
   const handleLogin = async () => {
     try {
       // 使用 axios 发送 POST 请求到后端登录接口
-      const response = await axios.post('/api/login', {
-        user_id: username.value,  // 修改请求参数为 user_id
+      const response = await axios.post('http://127.0.0.1:4523/m1/6680275-6389502-default/user/login', 
+      {
+        username: username.value,  // 修改请求参数为 user_id
         password: password.value
       })
       
-      // 假设后端返回用户信息，你可以将其存储在 currentUser 中
-      currentUser.value = response.data.user
+       // 检查后端返回的 success 字段
+    if (response.data.success) {
+      console.log(response);
       
+      // 假设后端返回的用户信息在 response.data.user 中
+      currentUser.value = {
+        user_id: response.data.user_id      };
       // 将用户信息存储到 localStorage 中
       localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
-      
-      // 登录成功后跳转到用户页面
-      router.push('/user')
+
+        // 登录成功后跳转到用户页面
+        router.push('/user')
+      } else {
+        // 登录失败，显示错误信息
+        alert(response.data.message)
+      }
     } catch (error) {
       // 处理登录失败的情况
       console.error('登录失败:', error)
       alert('用户名或密码错误，请重试。')
     }
   }
-  </script>
+</script>
   
   <style scoped>
 .auth-container {

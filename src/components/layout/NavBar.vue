@@ -46,6 +46,8 @@
     { path: '/space-time', label: '时空维度分析' },
     { path: '/market', label: '观众与市场分析' },
   ]
+
+  
   const logout = () => {
   currentUser.value = null
   localStorage.removeItem('currentUser')

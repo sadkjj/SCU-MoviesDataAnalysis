@@ -36,7 +36,6 @@
   import RatingInsight from '@/components/analysis/RatingInsight.vue'
   import MarketTrend from '@/components/analysis/MarketTrend.vue'
   import PreferenceEvolution from '@/components/analysis/PreferenceEvolution.vue'
-  
   const currentTab = ref<'rating' | 'market' | 'preference'>('rating')
 </script>
   
