@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-<template>
-    <div>
-      <h1>用户管理页面</h1>
-    </div>
-  </template>
-  
-  <script setup lang="ts">
-  // 这里先留空，后续可加逻辑
-  </script>
-  
-  <style scoped>
-  
-  </style>
-  
-=======
 <template>
   <div class="user-admin">
     <h2>👤 用户信息</h2>
@@ -249,4 +233,3 @@ onMounted(() => {
     color: #10b981;
   }
 </style>
->>>>>>> 2169fedfedc3d443e3192294224aa2ddb9a5d482
