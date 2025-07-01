@@ -1,62 +1,204 @@
--- Create the database
-CREATE DATABASE IF NOT EXISTS movie_db;
-USE movie_db;
+-- 电影表（movies）
+CREATE TABLE movies (
+    movie_id BIGINT NOT NULL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    release_date VARCHAR(100),
+    total_box_office DECIMAL(15,2),
+    avg_ticket_price DECIMAL(6,2),
+    screening_count INT,
+    attendance_rate DECIMAL(5,2),
+    country VARCHAR(50),
+    overall_rating DECIMAL(3,1),
+    description TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Create the movies table
-CREATE TABLE IF NOT EXISTS movies (
-    movie_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    release_date DATE NOT NULL,
-    rating DECIMAL(4,3),
-    box_office_usd BIGINT,
-    release_region VARCHAR(255),
-    genres VARCHAR(255),
-    directors VARCHAR(255)
-);
-
--- Insert the movie data
-INSERT INTO movies (title, release_date, rating, box_office_usd, release_region, genres, directors) VALUES
-('死神来了6：血脉诅咒', '2025-05-14', 7.206, 280004566, 'United States of America', '恐怖, 悬疑', '亚当 B·斯坦因, 扎克·利波夫斯基'),
-('星际宝贝史迪奇', '2025-05-17', 7.100, 910349181, 'United States of America', '家庭, 科幻, 喜剧, 冒险', '迪恩·弗莱舍·坎普'),
-('新·驯龙高手', '2025-06-06', 7.909, 358189000, 'United States of America', '奇幻, 家庭, 动作', '迪恩·德布洛斯'),
-('惊变28年', '2025-06-18', 7.125, 62805230, 'United Kingdom, United States of America', '恐怖, 惊悚, 科幻', '丹尼·博伊尔'),
-('谍网追凶', '2025-04-09', 6.972, 95956038, 'United States of America', '惊悚, 动作', '詹姆斯·霍斯'),
-('我的世界大电影', '2025-03-31', 6.500, 951514812, 'Sweden, United States of America', '家庭, 喜剧, 冒险, 奇幻', '杰瑞德·赫斯'),
-('会计刺客2', '2025-04-23', 7.216, 102123366, 'United States of America', '悬疑, 犯罪, 惊悚', '加文·欧康诺'),
-('罪人', '2025-04-16', 7.557, 362889145, 'United States of America', '恐怖, 奇幻, 惊悚', '瑞恩·库格勒'),
-('碟中谍8：最终清算', '2025-05-17', 7.200, 540612404, 'United States of America', '动作, 冒险, 惊悚', '克里斯托弗·麦夸里'),
-('犯罪都市4', '2024-04-24', 6.856, 83703350, 'South Korea', '动作, 犯罪, 剧情, 惊悚, 喜剧', '许明行'),
-('疾速追杀：芭蕾杀姬', '2025-06-04', 7.100, 100818000, 'United States of America', '动作, 惊悚, 犯罪', '伦·怀斯曼'),
-('制暴：无限杀机', '2025-03-26', 6.698, 99068160, 'United Kingdom, United States of America', '动作, 犯罪, 惊悚', '大卫·阿耶'),
-('白雪公主', '2025-03-12', 4.300, 205067778, 'United States of America', '家庭, 奇幻', '马克·韦伯'),
-('丑陋的继姐', '2025-03-07', 7.159, 884602, 'Denmark, Norway, Poland, Sweden', '恐怖, 喜剧, 奇幻, 剧情', 'Emilie Blichfeldt'),
-('地球特派员', '2025-06-18', 6.733, 35000000, 'United States of America', '家庭, 喜剧, 冒险, 动画, 科幻', '石之予, 玛德琳·莎拉芬, 阿德里安·莫利纳'),
-('雷霆特攻队*', '2025-04-30', 7.402, 380591509, 'United States of America', '动作, 科幻, 冒险', '杰克·施莱尔'),
-('海洋奇缘2', '2024-11-21', 7.078, 1059242164, 'Canada, United States of America', '动画, 冒险, 家庭, 喜剧', '小戴夫·德里克, 杰森·汉德, 达娜·莱杜克斯·米勒'),
-('战·争', '2025-04-09', 7.177, 31896828, 'United Kingdom, United States of America', '战争, 动作', 'Ray Mendoza, 亚历克斯·加兰'),
-('腓尼基计划', '2025-05-23', 6.925, 27449265, 'United States of America, Germany', '冒险, 喜剧', '韦斯·安德森'),
-('幽冥部队', '2025-05-01', 6.402, 4307562, 'United States of America', '动作, 剧情, 惊悚', '乔·卡纳汉'),
-('美国队长4', '2025-02-12', 6.076, 415101577, 'United States of America', '动作, 惊悚, 科幻', '朱利叶斯·约拿'),
-('直到黎明', '2025-04-23', 6.602, 52794193, 'United States of America', '恐怖, 悬疑', '大卫·F·桑德伯格'),
-('刺猬索尼克3', '2024-12-19', 7.708, 492162604, 'United States of America, Japan', '动作, 科幻, 喜剧, 家庭', '杰夫·福勒'),
-('功夫梦：融合之道', '2025-05-08', 6.900, 98176000, 'United States of America', '动作, 冒险, 剧情', '乔纳森·恩特威斯尔'),
-('驯龙高手3', '2019-01-03', 7.750, 524580592, 'United States of America', '动画, 家庭, 冒险', '迪恩·德布洛斯'),
-('在失落之地', '2025-02-27', 6.529, 4755330, 'Germany, Switzerland', '动作, 奇幻, 冒险', '保罗·安德森');
-
--- 创建用户表
-CREATE TABLE IF NOT EXISTS users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    account_id VARCHAR(10) UNIQUE NOT NULL,
+-- 导演表（directors）
+CREATE TABLE directors (
+    director_id BIGINT NOT NULL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    gender ENUM('男', '女', '其他') NOT NULL,
-    password VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) AUTO_INCREMENT = 20250001;  -- 设置账号ID从20250001开始
+    gender TINYINT COMMENT '0:未知 1:男 2:女',
+    birth_date DATE,
+    nationality VARCHAR(50)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 插入5个用户数据
-INSERT INTO users (account_id, name, gender, password) VALUES
-('20250001', '张三', '男', 'zhang123!'),
-('20250002', '李四', '男', 'li456@'),
-('20250003', '王五', '男', 'wang789#'),
-('20250004', '赵六', '女', 'zhao101$'),
-('20250005', '钱七', '女', 'qian202%');
+-- 演员表（actors）
+CREATE TABLE actors (
+    actor_id BIGINT NOT NULL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    gender TINYINT COMMENT '0:未知 1:男 2:女',
+    birth_date DATE,
+    nationality VARCHAR(50)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 类型表（categories）
+CREATE TABLE categories (
+    genre_id BIGINT NOT NULL PRIMARY KEY,
+    name VARCHAR(30) NOT NULL,
+    description VARCHAR(200)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 电影-导演关联表（movie_directors）
+CREATE TABLE movie_directors (
+    id BIGINT NOT NULL PRIMARY KEY,
+    movie_id BIGINT NOT NULL,
+    director_id BIGINT NOT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (director_id) REFERENCES directors(director_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 电影-演员关联表（movie_actors）
+CREATE TABLE movie_actors (
+    id BIGINT NOT NULL PRIMARY KEY,
+    movie_id BIGINT NOT NULL,
+    actor_id BIGINT NOT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (actor_id) REFERENCES actors(actor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 电影-类型关联表（movie_categories）
+CREATE TABLE movie_categories (
+    id BIGINT NOT NULL PRIMARY KEY,
+    movie_id BIGINT NOT NULL,
+    genre_id BIGINT NOT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (genre_id) REFERENCES categories(genre_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 用户表（users）
+CREATE TABLE users (
+    user_id BIGINT NOT NULL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    real_name VARCHAR(50),
+    phone VARCHAR(20),
+    role_type TINYINT NOT NULL COMMENT '1:管理员 2:普通用户',
+    email VARCHAR(100),
+    create_time DATETIME NOT NULL,
+    update_time DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 为关联表创建复合索引（提高查询性能）
+CREATE INDEX idx_movie_director ON movie_directors(movie_id, director_id);
+CREATE INDEX idx_movie_actor ON movie_actors(movie_id, actor_id);
+CREATE INDEX idx_movie_genre ON movie_categories(movie_id, genre_id);
+
+INSERT INTO movies (movie_id, title, release_date, total_box_office, avg_ticket_price, screening_count, attendance_rate, country, overall_rating, description) VALUES
+(1, '肖申克的救赎', '1994-09-23', 28340000.00, 8.50, 12000, 85.50, '美国', 9.3, '一位银行家被冤枉入狱，在监狱中展现非凡毅力和智慧的故事'),
+(2, '阿甘正传', '1994-07-06', 677400000.00, 9.20, 18000, 90.20, '美国', 9.2, '一个智商不高但心地善良的男子见证美国历史重大事件的故事'),
+(3, '泰坦尼克号', '1997-12-19', 2187000000.00, 10.50, 25000, 95.80, '美国', 9.1, '豪华邮轮上的跨阶级爱情悲剧'),
+(4, '盗梦空间', '2010-07-16', 836800000.00, 12.00, 15000, 88.30, '美国', 9.0, '关于梦境入侵的科幻惊悚片'),
+(5, '霸王别姬', '1993-01-01', 30000000.00, 5.50, 8000, 75.20, '中国', 9.6, '两位京剧艺人跨越半个世纪的悲欢离合'),
+(6, '这个杀手不太冷', '1994-09-14', 46000000.00, 7.80, 10000, 82.40, '法国', 9.4, '职业杀手与小女孩的感人故事'),
+(7, '星际穿越', '2014-11-07', 677500000.00, 11.50, 14000, 87.60, '美国', 9.3, '宇航员穿越虫洞寻找新家园的科幻冒险'),
+(8, '千与千寻', '2001-07-20', 355000000.00, 8.20, 12000, 92.10, '日本', 9.3, '小女孩在神灵世界的奇幻冒险'),
+(9, '教父', '1972-03-24', 245100000.00, 6.50, 10000, 89.70, '美国', 9.2, '黑手党家族的兴衰史诗'),
+(10, '疯狂动物城', '2016-03-04', 1023000000.00, 10.80, 20000, 94.50, '美国', 9.0, '兔子警官和狐狸骗子联手破案的动画喜剧');
+
+INSERT INTO directors (director_id, name, gender, birth_date, nationality) VALUES
+(1, '弗兰克·德拉邦特', 1, '1959-01-28', '美国'),
+(2, '罗伯特·泽米吉斯', 1, '1952-05-14', '美国'),
+(3, '詹姆斯·卡梅隆', 1, '1954-08-16', '加拿大'),
+(4, '克里斯托弗·诺兰', 1, '1970-07-30', '英国'),
+(5, '陈凯歌', 1, '1952-08-12', '中国'),
+(6, '吕克·贝松', 1, '1959-03-18', '法国'),
+(7, '宫崎骏', 1, '1941-01-05', '日本'),
+(8, '弗朗西斯·福特·科波拉', 1, '1939-04-07', '美国'),
+(9, '拜伦·霍华德', 1, '1968-12-26', '美国'),
+(10, '李安', 1, '1954-10-23', '中国台湾');
+
+INSERT INTO actors (actor_id, name, gender, birth_date, nationality) VALUES
+(1, '蒂姆·罗宾斯', 1, '1958-10-16', '美国'),
+(2, '摩根·弗里曼', 1, '1937-06-01', '美国'),
+(3, '汤姆·汉克斯', 1, '1956-07-09', '美国'),
+(4, '莱昂纳多·迪卡普里奥', 1, '1974-11-11', '美国'),
+(5, '凯特·温斯莱特', 2, '1975-10-05', '英国'),
+(6, '约瑟夫·高登-莱维特', 1, '1981-02-17', '美国'),
+(7, '张国荣', 1, '1956-09-12', '中国香港'),
+(8, '张丰毅', 1, '1956-09-01', '中国'),
+(9, '让·雷诺', 1, '1948-07-30', '法国'),
+(10, '娜塔莉·波特曼', 2, '1981-06-09', '美国'),
+(11, '马修·麦康纳', 1, '1969-11-04', '美国'),
+(12, '安妮·海瑟薇', 2, '1982-11-12', '美国'),
+(13, '柊瑠美', 2, '1987-08-01', '日本'),
+(14, '马龙·白兰度', 1, '1924-04-03', '美国'),
+(15, '阿尔·帕西诺', 1, '1940-04-25', '美国'),
+(16, '金妮弗·古德温', 2, '1978-05-22', '美国'),
+(17, '杰森·贝特曼', 1, '1969-01-14', '美国');
+
+INSERT INTO categories (genre_id, name, description) VALUES
+(1, '剧情', '以人物情感和关系发展为核心的电影类型'),
+(2, '爱情', '主要讲述爱情故事的电影'),
+(3, '科幻', '基于科学假设和想象的虚构故事'),
+(4, '动画', '通过动画技术制作的电影'),
+(5, '犯罪', '涉及犯罪行为和司法系统的电影'),
+(6, '奇幻', '包含魔法或其他超自然元素的电影'),
+(7, '惊悚', '制造紧张和悬念的电影'),
+(8, '历史', '基于历史事件或人物的电影'),
+(9, '喜剧', '以幽默和搞笑为主要特点的电影'),
+(10, '动作', '包含大量动作场面的电影');
+
+INSERT INTO movie_directors (id, movie_id, director_id) VALUES
+(1, 1, 1),
+(2, 2, 2),
+(3, 3, 3),
+(4, 4, 4),
+(5, 5, 5),
+(6, 6, 6),
+(7, 7, 4),
+(8, 8, 7),
+(9, 9, 8),
+(10, 10, 9);
+
+INSERT INTO movie_actors (id, movie_id, actor_id) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 2, 3),
+(4, 3, 4),
+(5, 3, 5),
+(6, 4, 4),
+(7, 4, 6),
+(8, 5, 7),
+(9, 5, 8),
+(10, 6, 9),
+(11, 6, 10),
+(12, 7, 11),
+(13, 7, 12),
+(14, 8, 13),
+(15, 9, 14),
+(16, 9, 15),
+(17, 10, 16),
+(18, 10, 17);
+
+INSERT INTO movie_categories (id, movie_id, genre_id) VALUES
+(1, 1, 1),
+(2, 1, 5),
+(3, 2, 1),
+(4, 2, 8),
+(5, 3, 1),
+(6, 3, 2),
+(7, 4, 3),
+(8, 4, 7),
+(9, 5, 1),
+(10, 5, 8),
+(11, 6, 5),
+(12, 6, 10),
+(13, 7, 3),
+(14, 7, 1),
+(15, 8, 4),
+(16, 8, 6),
+(17, 9, 1),
+(18, 9, 5),
+(19, 10, 4),
+(20, 10, 9);
+
+INSERT INTO users (user_id, username, password, real_name, phone, role_type, email, create_time, update_time) VALUES
+(1, 'admin', 'admin123', '系统管理员', '13800138000', 1, 'admin@example.com', '2023-01-01 10:00:00', '2023-01-01 10:00:00'),
+(2, 'john_doe', 'john123', '约翰·多伊', '13912345678', 2, 'john.doe@example.com', '2023-02-15 14:30:00', '2023-02-15 14:30:00'),
+(3, 'jane_smith', 'jane456', '简·史密斯', '13987654321', 2, 'jane.smith@example.com', '2023-03-10 09:15:00', '2023-03-10 09:15:00'),
+(4, 'michael_wang', 'mike789', '王麦克', '13811223344', 2, 'michael.wang@example.com', '2023-04-05 16:45:00', '2023-04-05 16:45:00'),
+(5, 'sarah_li', 'sarah101', '李莎拉', '13755667788', 2, 'sarah.li@example.com', '2023-05-20 11:20:00', '2023-05-20 11:20:00'),
+(6, 'david_zhang', 'david202', '张大卫', '13699887766', 2, 'david.zhang@example.com', '2023-06-12 13:10:00', '2023-06-12 13:10:00'),
+(7, 'emily_chen', 'emily303', '陈艾米丽', '13544556677', 2, 'emily.chen@example.com', '2023-07-08 08:30:00', '2023-07-08 08:30:00'),
+(8, 'robert_liu', 'robert404', '刘罗伯特', '13477889900', 2, 'robert.liu@example.com', '2023-08-25 15:50:00', '2023-08-25 15:50:00'),
+(9, 'lisa_zhao', 'lisa505', '赵丽莎', '13311223344', 2, 'lisa.zhao@example.com', '2023-09-18 10:40:00', '2023-09-18 10:40:00'),
+(10, 'kevin_sun', 'kevin606', '孙凯文', '13255667788', 2, 'kevin.sun@example.com', '2023-10-30 17:25:00', '2023-10-30 17:25:00');
