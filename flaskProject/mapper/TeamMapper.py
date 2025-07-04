@@ -79,43 +79,35 @@ class TeamAnalysisMapper:
 
         return {"ranking": results}
 
-    def get_director_rating_ranking(self, director_name=None, start_year=None, end_year=None, top_n=10):
+    def get_top_directors(self, start_year=None, end_year=None, top_n=10):
         """
-        获取导演评分排行榜
-        :param director_name: 导演姓名(可选)
+        获取前N名导演的评分统计和电影信息
         :param start_year: 开始年份(可选)
         :param end_year: 结束年份(可选)
-        :param top_n: 返回前N名导演
-        :return: {
-            "ranking": [
-                {
-                    "rank": 1,
-                    "name": "克里斯托弗·诺兰",
-                    "averageRating": 8.5,
-                    "MinRating": 7
-                },
-                ...
-            ]
-        }
+        :param top_n: 返回前N名导演(默认10)
+        :return: [
+            {
+                "director": "导演姓名",
+                "averageRating": 平均分,
+                "movies": ["电影1", "电影2", ...]
+            },
+            ...
+        ]
         """
-        # 构建基础查询（关联movies和movie_directors表）
+        # 构建基础查询
         query = """
             (SELECT 
-                d.director_id,
-                d.name,
+                d.name AS director,
                 AVG(m.overall_rating) AS avg_rating,
-                MIN(m.overall_rating) AS min_rating,
-                COUNT(m.movie_id) AS movie_count
+                GROUP_CONCAT(DISTINCT m.title ORDER BY m.release_date DESC SEPARATOR '|') AS movie_titles
             FROM directors d
             JOIN movie_directors md ON d.director_id = md.director_id
             JOIN movies m ON md.movie_id = m.movie_id
             WHERE m.overall_rating IS NOT NULL
         """
 
-        # 添加筛选条件
+        # 添加年份筛选条件
         conditions = []
-        if director_name:
-            conditions.append(f"d.name LIKE '%{director_name}%'")
         if start_year:
             conditions.append(f"CAST(SUBSTRING(m.release_date, 1, 4) AS SIGNED) >= {start_year}")
         if end_year:
@@ -124,7 +116,13 @@ class TeamAnalysisMapper:
         if conditions:
             query += " AND " + " AND ".join(conditions)
 
-        query += f" GROUP BY d.director_id, d.name HAVING COUNT(m.movie_id) >= 3 ORDER BY avg_rating DESC LIMIT {top_n}) AS director_rating"
+        query += f"""
+            GROUP BY d.director_id, d.name
+            HAVING COUNT(m.movie_id) >= 1
+            ORDER BY avg_rating DESC
+            LIMIT {top_n}
+        ) AS top_directors
+        """
 
         # 执行查询
         df = self.spark.read.format("jdbc") \
@@ -135,17 +133,19 @@ class TeamAnalysisMapper:
             .option("password", self.password) \
             .load()
 
-        # 转换为所需格式并添加排名
+        # 处理结果
         results = []
-        for index, row in enumerate(df.collect(), start=1):
+        for row in df.collect():
+            # 将电影名称字符串拆分为列表
+            movies = row["movie_titles"].split("|") if row["movie_titles"] else []
+
             results.append({
-                "rank": index,
-                "name": row["name"],
+                "name": row["director"],
                 "averageRating": round(float(row["avg_rating"]), 1),
-                "MinRating": int(row["min_rating"]) if row["min_rating"] else 0
+                "movies": movies
             })
 
-        return {"ranking": results}
+        return results
 
     def get_director_genre_stats(self, director_name, start_year=None, end_year=None):
         """
@@ -275,16 +275,6 @@ class TeamAnalysisMapper:
             .option("user", self.user) \
             .option("password", self.password) \
             .load()
-
-        if df.isEmpty():
-            return {
-                "actor": actor_name,
-                "totalMovies": 0,
-                "overallRating": {"average": 0},
-                "genreStats": []
-            }
-
-        # 获取整体统计信息
         first_row = df.first()
         total_movies = first_row["total_movies"]
         overall_avg = first_row["overall_avg"]

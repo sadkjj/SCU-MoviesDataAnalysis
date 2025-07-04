@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, count, avg, desc
+from pyspark.sql.functions import col, count, avg, desc,expr
+from pyspark.sql.functions import col, lit, when, sum
 from flaskProject.config import Config
 import json
 
@@ -52,7 +53,7 @@ class ContentAnalysisMapper:
         result_df = df.withColumn("percentage", (col("count") / lit(total)) * 100) \
             .orderBy(desc("count")) \
             .select(
-            col("type"),
+            col("genre"),
             col("count").cast("int"),
             col("percentage").cast("float")
         )
@@ -113,6 +114,8 @@ class ContentAnalysisMapper:
             .load()
 
         # 转换为所需的JSON格式并按总票房降序排列
+        #同时将票房单位改为万元
+
         results = df.orderBy(desc("totalBoxOffice")) \
             .select(
             col("type"),
