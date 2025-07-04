@@ -1,3 +1,7 @@
+DROP DATABASE IF EXISTS movie_db;
+CREATE DATABASE IF NOT EXISTS movie_db;
+USE movie_db;
+
 -- 电影表（movies）
 CREATE TABLE movies (
     movie_id BIGINT NOT NULL PRIMARY KEY,
@@ -62,6 +66,17 @@ CREATE TABLE movie_categories (
     genre_id BIGINT NOT NULL,
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
     FOREIGN KEY (genre_id) REFERENCES categories(genre_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 电影-时间关联表
+-- 严格降序排序
+CREATE TABLE daily_box_office (
+    movie_id BIGINT NOT NULL,
+    date_time VARCHAR(100),
+    box_office DECIMAL(15,2),
+    attendees BIGINT,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    PRIMARY KEY (movie_id, date_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 用户表（users）
@@ -202,3 +217,11 @@ INSERT INTO users (user_id, username, password, real_name, phone, role_type, ema
 (8, 'robert_liu', 'robert404', '刘罗伯特', '13477889900', 2, 'robert.liu@example.com', '2023-08-25 15:50:00', '2023-08-25 15:50:00'),
 (9, 'lisa_zhao', 'lisa505', '赵丽莎', '13311223344', 2, 'lisa.zhao@example.com', '2023-09-18 10:40:00', '2023-09-18 10:40:00'),
 (10, 'kevin_sun', 'kevin606', '孙凯文', '13255667788', 2, 'kevin.sun@example.com', '2023-10-30 17:25:00', '2023-10-30 17:25:00');
+
+INSERT INTO daily_box_office(movie_id, date_time, box_office, attendees) VALUES
+(1, '2024-10-03', 123, 123),
+(1, '2024-11-04', 456, 425245),
+(1, '2024-11-05', 789, 25423),
+(2, '2024-11-06', 635, 21341),
+(2, '2024-11-07', 114514, 647568),
+(2, '2025-01-08', 451236, 35754);

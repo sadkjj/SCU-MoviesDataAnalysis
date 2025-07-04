@@ -7,7 +7,7 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
 
     def get_audience_preference(self, movie_type: str, start_month: str, end_month: str) -> dict:
         query = """(
-            SELECT month_date, SUM(attendees) AS attendees FROM movie_time
+            SELECT DATE_FORMAT(date_time, '%Y-%m') as month_date, SUM(attendees) AS attendees FROM daily_box_office
             WHERE movie_id IN (
                 SELECT movie_id FROM movie_categories
                 WHERE genre_id = (
@@ -15,8 +15,8 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
                     WHERE name = '{}'
                 )
             )
-            AND month_date >= '{}'
-            AND month_date <= '{}'
+            AND date_time >= '{}'
+            AND date_time <= '{}'
             GROUP BY month_date
         ) AS subquery
         """.format(movie_type, start_month, end_month)
@@ -30,8 +30,9 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
 
     def get_industry_data(self, start_month: str, end_month: str) -> dict:
         query = """(
-            SELECT * FROM month_data
-            WHERE month_date >= '{}' AND month_date <= '{}'
+            SELECT DATE_FORMAT(date_time, '%Y-%m') as month_date, SUM(box_office) as sum FROM daily_box_office
+            WHERE date_time >= '{}' AND date_time <= '{}'
+            GROUP BY month_date
         ) AS subquery
         """.format(start_month, end_month)
 
@@ -39,6 +40,5 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
 
         return {
             "times": df['month_date'].tolist(),
-            "ticket_prices": [float(x) for x in df['ticket_price']],
-            "box_offices": [float(x) for x in df['box_office']],
+            "box_offices": [float(x) for x in df['sum']],
         }
