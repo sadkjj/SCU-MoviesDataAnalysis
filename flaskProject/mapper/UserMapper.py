@@ -3,6 +3,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.window import Window  # 导入窗口函数
 from mapper.Mapper import Mapper
 from datetime import datetime
+from config import Config
 
 
 class UserMapper(Mapper):
@@ -60,11 +61,11 @@ class UserMapper(Mapper):
         """使用UPDATE语句更新用户信息"""
         try:
             # JDBC连接配置
-            jdbc_url = "jdbc:mysql://localhost:3306/movie_db?serverTimezone=Asia/Shanghai"
+            jdbc_url = Config.MYSQL_URL
             connection_properties = {
-                "user": "root",
-                "password": "123456",
-                "driver": "com.mysql.jdbc.Driver"
+                "user": Config.MYSQL_USER,
+                "password": Config.MYSQL_PASSWORD,
+                "driver": Config.MYSQL_DRIVER
             }
             # 创建JDBC连接
             connection = self.spark._jvm.java.sql.DriverManager.getConnection(

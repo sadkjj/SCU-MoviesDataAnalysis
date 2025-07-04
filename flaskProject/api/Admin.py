@@ -25,6 +25,12 @@ def add_user():
             "message": "缺少必填字段(用户名、密码、电话、邮箱、角色类型)"
         }), 400
 
+    if mapper.get_user_by_username(data['username']):
+        return jsonify({
+            "success": False,
+            "message": "用户名已存在"
+        })
+
     try:
         # 准备用户数据
         user_data = {
