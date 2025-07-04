@@ -22,9 +22,12 @@ class BasicMapper(Mapper):
         return df.groupBy("year").agg(F.count("*").alias("count")) \
             .orderBy("year").collect()  # 按年份分组计数并排序，返回一个List[pyspark.sql.Row]
 
-    def get_monthly_movie_count(self, year):
+    def get_monthly_movie_count(self, year, country='all'):
         """获取月度电影产量"""
         df = self.read_table("movies")
+        if country and country.lower() != "all":
+            df = df.filter(F.lower(F.col("country")) == country.lower())
+
         df = df.withColumn("year", F.year(F.to_date("release_date")))
         df = df.withColumn("month", F.month(F.to_date("release_date")))
 
@@ -43,7 +46,7 @@ class BasicMapper(Mapper):
         total = df.count()  # 计算总数
         return df.groupBy("country").agg(
             F.count("*").alias("count"),
-            (F.count("*") / total * 100).alias("percentage")  # 计算百分比
+            ( (F.count("*") / F.lit(total) * 100) if total > 0 else F.lit(0)).alias("percentage")  # 计算百分比
         ).orderBy(F.col("count").desc()).collect()
 
     def get_top_movies(self, limit=10, year=None, genre_id=None):
@@ -62,7 +65,7 @@ class BasicMapper(Mapper):
             df = df.join(movie_ids, "movie_id")
 
         # 添加排名
-        window = Window.orderBy(F.col("overall_rating").desc())
+        window = Window.orderBy(F.col("total_box_office").desc())
         df = df.withColumn("rank", F.dense_rank().over(window))
 
         return df.filter(F.col("rank") <= limit).collect()
@@ -118,3 +121,8 @@ class BasicMapper(Mapper):
                 })
 
         return results
+
+    def get_movie_genre_by_name(self, name):
+        """根据类型名获取id"""
+        genre = self.read_table("categories").filter(F.col("name").contains(name)).first()
+        return genre["genre_id"] if genre else None
