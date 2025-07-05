@@ -3,12 +3,6 @@
       <!-- 切换按钮 -->
       <div class="button-group">
         <button
-          :class="{ active: currentTab === 'rating' }"
-          @click="currentTab = 'rating'"
-        >
-          🎞 电影评分分析
-        </button>
-        <button
           :class="{ active: currentTab === 'market' }"
           @click="currentTab = 'market'"
         >
@@ -24,7 +18,6 @@
   
       <!-- 内容区域 -->
       <div class="content-area">
-        <RatingInsight v-if="currentTab === 'rating'" />
         <MarketTrend v-if="currentTab === 'market'" />
         <PreferenceEvolution v-if="currentTab === 'preference'" />
       </div>
@@ -33,10 +26,9 @@
   
 <script setup lang="ts">
   import { ref } from 'vue'
-  import RatingInsight from '@/components/analysis/RatingInsight.vue'
   import MarketTrend from '@/components/analysis/MarketTrend.vue'
   import PreferenceEvolution from '@/components/analysis/PreferenceEvolution.vue'
-  const currentTab = ref<'rating' | 'market' | 'preference'>('rating')
+  const currentTab = ref<'market' | 'preference'>('market')
 </script>
   
 <style scoped>

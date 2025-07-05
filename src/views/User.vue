@@ -1,8 +1,11 @@
-<template>
+<template> 
   <div class="user-admin">
     <h2>👤 用户信息</h2>
 
     <div class="user-card" v-if="userData">
+      <!-- 👤 用户头像 -->
+      <img :src="avatarUrl" class="avatar" alt="用户头像" />
+
       <div class="user-item"><strong>用户名：</strong>{{ userData.username }}</div>
       <div class="user-item"><strong>真实姓名：</strong>{{ userData.real_name }}</div>
       <div class="user-item"><strong>手机号：</strong>{{ userData.phone }}</div>
@@ -17,10 +20,22 @@
       <div class="dialog">
         <h3>修改个人信息</h3>
         <form @submit.prevent="submitEdit">
-          <label>用户名 <input v-model="editForm.username" /></label>
-          <label>真实姓名 <input v-model="editForm.real_name" /></label>
-          <label>手机号 <input v-model="editForm.phone" /></label>
-          <label>邮箱 <input v-model="editForm.email" /></label>
+          <label>
+            用户名
+            <input v-model="editForm.username" />
+          </label>
+          <label>
+            真实姓名
+            <input v-model="editForm.real_name" />
+          </label>
+          <label>
+            手机号
+            <input v-model="editForm.phone" />
+          </label>
+          <label>
+            邮箱
+            <input v-model="editForm.email" />
+          </label>
           <div class="dialog-buttons">
             <button type="submit">保存</button>
             <button type="button" @click="closeEditDialog">取消</button>
@@ -33,203 +48,279 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from 'vue'
-  import axios from 'axios';
-  import { currentUser } from '@/stores/user'
+import { ref, reactive, onMounted, computed } from 'vue'
+import axios from 'axios'
+import { currentUser } from '@/stores/user'
 
+interface User {
+  user_id: number
+  username: string
+  real_name: string
+  phone: string
+  email: string
+  role_type: number
+  create_time: string
+}
 
-  interface User {
-    user_id: number
-    username: string
-    real_name: string
-    phone: string
-    email: string
-    role_type: number
-    create_time: string
-  }
+const userData = ref<User | null>(null)
+const showDialog = ref(false)
+const updateMessage = ref('')
+const editForm = reactive({
+  username: '',
+  real_name: '',
+  phone: '',
+  email: ''
+})
 
-  const userData = ref<User | null>(null)
-  const showDialog = ref(false)
-  const updateMessage = ref('')
-  const editForm = reactive({
-    username: '',
-    real_name: '',
-    phone: '',
-    email: ''
-  })
+const fetchUserData = async () => {
+  const userId = currentUser.value?.user_id
+  console.log(userId)
 
-  
-  const fetchUserData = async () => {
-  const userId = currentUser.value;
-  console.log(userId);
-  
   if (!userId) {
-    console.error('user_id not found in localStorage');
-    return;
+    console.error('user_id not found in localStorage')
+    return
   }
 
   try {
-    // 使用 axios 发送 GET 请求到后端获取用户信息接口
-    const response = await axios.get(`http://127.0.0.1:4523/m1/6680275-6389502-default/api/user/${userId}`);
-    
+    const response = await axios.get(`http://127.0.0.1:4523/m1/6680275-6389502-default/api/user/${userId}`)
+    console.log(response)
 
-    console.log(response);
-    
     if (response.data.success) {
-      userData.value = response.data.data;
+      userData.value = response.data.data
     } else {
-      console.error('Failed to fetch user data:', response.data.message);
+      console.error('Failed to fetch user data:', response.data.message)
     }
   } catch (error) {
-    console.error('Failed to fetch user data:', error);
+    console.error('Failed to fetch user data:', error)
   }
-};
+}
 
 onMounted(() => {
-  fetchUserData();
-});
-  const openEditDialog = () => {
-    if (!userData.value) return
-    Object.assign(editForm, {
-      username: userData.value.username,
-      real_name: userData.value.real_name,
-      phone: userData.value.phone,
-      email: userData.value.email
-    })
-    updateMessage.value = ''
-    showDialog.value = true
+  fetchUserData()
+})
+
+const openEditDialog = () => {
+  if (!userData.value) return
+  Object.assign(editForm, {
+    username: userData.value.username,
+    real_name: userData.value.real_name,
+    phone: userData.value.phone,
+    email: userData.value.email
+  })
+  updateMessage.value = ''
+  showDialog.value = true
+}
+
+const closeEditDialog = () => {
+  showDialog.value = false
+}
+
+const submitEdit = async () => {
+  const requestPayload = {
+    username: editForm.username,
+    real_name: editForm.real_name,
+    phone: editForm.phone,
+    email: editForm.email
   }
 
-  const closeEditDialog = () => {
-    showDialog.value = false
-  }
+  try {
+    const response = await axios.put(
+      `http://127.0.0.1:4523/m1/6680275-6389502-default/api/user/${userData.value?.user_id}`,
+      requestPayload
+    )
+    console.log(response)
 
-  const submitEdit = async () => {
-    const requestPayload = {
-      username: editForm.username,
-      real_name: editForm.real_name,
-      phone: editForm.phone,
-      email: editForm.email
-    }
-
-    // 模拟请求
-    const response = {
-      success: true,
-      message: '信息更新成功'
-    }
-
-    if (response.success) {
+    if (response.data.success) {
       if (userData.value) {
         Object.assign(userData.value, requestPayload)
       }
-      updateMessage.value = response.message
+      updateMessage.value = response.data.message
       setTimeout(() => {
         showDialog.value = false
       }, 1000)
+    } else {
+      updateMessage.value = response.data.message || '信息更新失败'
     }
+  } catch (error) {
+    console.error('Failed to update user data:', error)
+    updateMessage.value = '网络错误或更新异常，请稍后再试'
   }
+}
 
-  const roleLabel = (roleType: number) => {
-    switch (roleType) {
-      case 1: return '管理员'
-      case 2: return '普通用户'
-      case 3: return '游客'
-      default: return '未知'
-    }
+const roleLabel = (roleType: number) => {
+  switch (roleType) {
+    case 1: return '管理员'
+    case 2: return '普通用户'
+    case 3: return '游客'
+    default: return '未知'
   }
+}
+
+const avatarUrl = computed(() => {
+  const name = userData.value?.username || 'guest'
+  return `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(name)}`
+})
 </script>
 
 <style scoped>
-  .user-admin {
-    padding: 2rem;
-  }
-  h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .user-card {
-    background-color: #f9fafb;
-    padding: 1.5rem 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    max-width: 500px;
-  }
-  .user-item {
-    margin: 0.6rem 0;
-    font-size: 1rem;
-    color: #333;
-  }
-  .edit-btn {
-    margin-top: 1.2rem;
-    padding: 0.6rem 1.2rem;
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 0.6rem;
-    cursor: pointer;
-  }
-  .edit-btn:hover {
-    background-color: #2563eb;
-  }
-  .loading {
-    font-size: 1rem;
-    color: #888;
-  }
-  .dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .dialog {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    width: 350px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  }
-  .dialog h3 {
-    margin-bottom: 1rem;
-  }
-  .dialog label {
-    display: block;
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-  }
-  .dialog input {
-    width: 100%;
-    padding: 0.5rem;
-    margin-top: 0.3rem;
-    border: 1px solid #ccc;
-    border-radius: 0.5rem;
-  }
-  .dialog-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  .dialog-buttons button {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-  }
-  .dialog-buttons button[type="submit"] {
-    background-color: #10b981;
-    color: white;
-  }
-  .dialog-buttons button[type="button"] {
-    background-color: #e5e7eb;
-  }
-  .update-msg {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #10b981;
-  }
+.user-admin {
+  padding: 4rem 2rem;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-card {
+  background-color: #ffffff;
+  padding: 2.5rem 3rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 700px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #3b82f6;
+  margin: 0 auto 1rem auto;
+  grid-column: span 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-item {
+  color: #374151;
+  line-height: 1.6;
+}
+
+.edit-btn {
+  grid-column: span 2;
+  justify-self: center;
+  padding: 0.75rem 2rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+  background-color: #2563eb;
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: #6b7280;
+  margin-top: 2rem;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.dialog {
+  background-color: #ffffff;
+  padding: 2.5rem 3rem;
+  border-radius: 1rem;
+  width: 420px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.dialog h3 {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.dialog label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.dialog input {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.dialog input:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.dialog-buttons button {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.dialog-buttons button[type="submit"] {
+  background-color: #10b981;
+  color: white;
+}
+
+.dialog-buttons button[type="button"] {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.dialog-buttons button:hover {
+  opacity: 0.9;
+}
+
+.update-msg {
+  text-align: center;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 1rem;
+}
 </style>

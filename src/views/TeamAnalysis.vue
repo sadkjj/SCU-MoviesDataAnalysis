@@ -44,7 +44,7 @@
   .button-group button {
     padding: 0.8rem 1.6rem;
     border: none;
-    background-color: #e5e7eb;
+    background-color: #36a8dd;
     border-radius: 999px;
     cursor: pointer;
     font-size: 1rem;

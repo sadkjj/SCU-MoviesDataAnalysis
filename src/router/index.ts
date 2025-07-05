@@ -11,6 +11,7 @@ import AudienceMarketAnalysis from '@/views/AudienceMarketAnalysis.vue'
 import UserAdmin from '@/views/User.vue'
 import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
+import admin from '@/views/admin.vue'
 
 // 添加类型注解
 const routes: Array<RouteRecordRaw> = [
@@ -23,6 +24,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/user', name: 'UserAdmin', component: UserAdmin },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
+  {path:'/admin',component:admin},
 ]
 
 const router = createRouter({

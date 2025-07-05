@@ -1,75 +1,250 @@
 <template>
   <div class="chart-placeholder">
     <h2>📊-💰 类型与票房分析</h2>
+
+    <!-- 筛选条件 -->
+    <div class="filter-container">
+      <div class="filter-group">
+        <label>起始年份：</label>
+        <select v-model="startYear">
+          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>终止年份：</label>
+        <select v-model="endYear">
+          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <button @click="fetchData" :disabled="loading">
+          {{ loading ? '加载中...' : '🔍 搜索' }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
     <div ref="chartRef" class="chart"></div>
   </div>
 </template>
 
-<script setup>
-import { onMounted, ref } from 'vue'
+<script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import axios from 'axios'
 
+// 图表引用
 const chartRef = ref(null)
+let chartInstance: echarts.ECharts | null = null
 
-const mockData = [
-  { type: '动画', avgBoxOffice: 8.7, maxBoxOffice: 50.1, minBoxOffice: 0.1, totalBoxOffice: 215.3 },
-  { type: '剧情', avgBoxOffice: 12.3, maxBoxOffice: 88.2, minBoxOffice: 0.5, totalBoxOffice: 500.1 },
-  { type: '动作', avgBoxOffice: 15.4, maxBoxOffice: 100.7, minBoxOffice: 0.3, totalBoxOffice: 620.9 },
-  { type: '喜剧', avgBoxOffice: 10.1, maxBoxOffice: 70.5, minBoxOffice: 0.2, totalBoxOffice: 430.2 },
-  { type: '爱情', avgBoxOffice: 6.8, maxBoxOffice: 40.9, minBoxOffice: 0.1, totalBoxOffice: 300.0 }
-]
+// 筛选条件
+const startYear = ref(2020)
+const endYear = ref(2023)
+const yearRange = Array.from({ length: 16 }, (_, i) => 2010 + i)
 
-onMounted(() => {
-  const chart = echarts.init(chartRef.value)
+// 状态管理
+const loading = ref(false)
+const errorMessage = ref('')
+const unit = ref('亿') // 从API获取的单位
 
-  const types = mockData.map(d => d.type)
-  const avg = mockData.map(d => d.avgBoxOffice)
-  const max = mockData.map(d => d.maxBoxOffice)
-  const min = mockData.map(d => d.minBoxOffice)
-  const total = mockData.map(d => d.totalBoxOffice)
+// 接口响应类型
+interface GenreAnalysis {
+  type: string
+  avgBoxOffice: number
+  maxBoxOffice: number
+  minBoxOffice: number
+  totalBoxOffice: number
+}
 
-  chart.setOption({
-    title: {
-      text: '不同类型电影与票房关系',
-      left: 'center'
+interface ApiResponse {
+  code: number
+  message: string
+  data: {
+    analysis: GenreAnalysis[]
+  }
+}
+
+// 初始化图表
+const initChart = () => {
+  if (chartRef.value) {
+    chartInstance = echarts.init(chartRef.value)
+    window.addEventListener('resize', () => chartInstance?.resize())
+  }
+}
+
+// 获取数据
+const fetchData = async () => {
+  try {
+    loading.value = true
+    errorMessage.value = ''
+
+    // 参数验证
+    if (startYear.value > endYear.value) {
+      errorMessage.value = '起始年份不能大于终止年份'
+      return
+    }
+
+    const params = {
+      startYear: startYear.value,
+      endYear: endYear.value
+    }
+
+    const { data } = await axios.get<ApiResponse>(
+      'http://127.0.0.1:4523/m1/6680275-6389502-default/boxOffice',
+      { params }
+    )
+
+    if (data.code === 200) {
+      updateChart(data.data.analysis)
+    } else {
+      return {
+        message: data.message || 'error' // 确保返回message字段
+      }
+    }
+  } catch (error: any) {
+    console.error('请求失败:', error)
+    // 捕获400错误并返回标准格式
+    if (error.response && error.response.status === 400) {
+      return {
+        message: error.response.data.message || 'error'
+      }
+    }
+    // 其他错误也返回标准格式
+    return {
+      message: 'error'
+    }
+  }
+}
+
+// 更新图表
+const updateChart = (analysisData: any[]) => {
+  if (!chartInstance) return
+
+  const types = analysisData.map((d: { type: any; }) => d.type)
+  const avg = analysisData.map((d: { avgBoxOffice: any; }) => d.avgBoxOffice)
+  const max = analysisData.map((d: { maxBoxOffice: any; }) => d.maxBoxOffice)
+  const min = analysisData.map((d: { minBoxOffice: any; }) => d.minBoxOffice)
+  const total = analysisData.map((d: { totalBoxOffice: any; }) => d.totalBoxOffice)
+
+  const option = {
+    title: { 
+      text: '不同类型电影票房分析',
+      subtext: `${startYear.value}-${endYear.value}年 | 单位: ${unit.value}`,
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold'
+      }
     },
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: (params: [any, any, any, any]) => {
+        const [avgParam, maxParam, minParam, totalParam] = params
+        return `
+          <strong>${avgParam.name}</strong><br/>
+          平均票房: ${avgParam.value} ${unit.value}<br/>
+          最高票房: ${maxParam.value} ${unit.value}<br/>
+          最低票房: ${minParam.value} ${unit.value}<br/>
+          总票房: ${totalParam.value} ${unit.value}
+        `
+      }
     },
-    legend: {
+    legend: { 
+      data: ['平均票房', '最高票房', '最低票房', '总票房'],
       bottom: 10
     },
-    xAxis: {
-      type: 'category',
-      data: types
+    grid: {
+      top: '20%',
+      bottom: '15%',
+      containLabel: true
     },
-    yAxis: {
-      type: 'value',
-      name: '票房（亿）'
+    xAxis: { 
+      type: 'category', 
+      data: types,
+      axisLabel: {
+        interval: 0,
+        rotate: types.length > 5 ? 30 : 0
+      }
+    },
+    yAxis: { 
+      type: 'value', 
+      name: `票房 (${unit.value})`,
+      axisLine: {
+        show: true
+      }
     },
     series: [
-      {
-        name: '平均票房',
-        type: 'bar',
-        data: avg
+      { 
+        name: '平均票房', 
+        type: 'bar', 
+        data: avg,
+        itemStyle: {
+          color: '#5470C6'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: `{c} ${unit.value}`
+        }
       },
-      {
-        name: '最高票房',
-        type: 'bar',
-        data: max
+      { 
+        name: '最高票房', 
+        type: 'bar', 
+        data: max,
+        itemStyle: {
+          color: '#91CC75'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: `{c} ${unit.value}`
+        }
       },
-      {
-        name: '最低票房',
-        type: 'bar',
-        data: min
+      { 
+        name: '最低票房', 
+        type: 'bar', 
+        data: min,
+        itemStyle: {
+          color: '#FAC858'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: `{c} ${unit.value}`
+        }
       },
-      {
-        name: '总票房',
-        type: 'bar',
-        data: total
+      { 
+        name: '总票房', 
+        type: 'bar', 
+        data: total,
+        itemStyle: {
+          color: '#EE6666'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: `{c} ${unit.value}`
+        }
       }
     ]
-  })
+  }
+
+  chartInstance.setOption(option, true)
+}
+
+// 监听年份变化自动更新
+watch([startYear, endYear], () => {
+  fetchData()
+})
+
+onMounted(() => {
+  initChart()
+  fetchData()
 })
 </script>
 
@@ -82,10 +257,80 @@ onMounted(() => {
   text-align: center;
 }
 
-/* 图表容器 */
 .chart {
   width: 100%;
-  height: 420px;
+  height: 500px;
   margin-top: 1rem;
+}
+
+.filter-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #fff8dc;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+
+.filter-group label {
+  min-width: 80px;
+  text-align: right;
+}
+
+.filter-group select {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border 0.3s, box-shadow 0.3s;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.3);
+}
+
+.filter-group button {
+  padding: 0.5rem 1.2rem;
+  background-color: #facc15;
+  border: none;
+  border-radius: 6px;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.filter-group button:hover:not(:disabled) {
+  background-color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.filter-group button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #ef4444;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background-color: #fee2e2;
+  border-radius: 0.5rem;
 }
 </style>

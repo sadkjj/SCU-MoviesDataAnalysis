@@ -1,218 +1,287 @@
 <template>
-    <div class="home-container">
-      <!-- 搜索框 -->
-      <div class="search-bar">
-        <input
-          v-model="keyword"
-          type="text"
-          placeholder="搜索电影名称、导演、演员..."
-          class="search-input"
-        />
+  <div class="home-container">
+    <!-- 搜索框 -->
+    <div class="search-bar">
+      <input
+        v-model="keyword"
+        type="text"
+        placeholder="搜索电影名称、导演、演员..."
+        class="search-input"
+      />
+    </div>
+
+    <!-- 筛选区域 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">类型：</label>
+        <select v-model="selectedGenre" class="filter-select">
+          <option value="">全部类型</option>
+          <option value="科幻">科幻</option>
+          <option value="奇幻">奇幻</option>
+          <option value="历史">历史</option>
+          <option value="犯罪">犯罪</option>
+          <option value="剧情">剧情</option>
+          <option value="悬疑">悬疑</option>
+          <option value="古装">古装</option>
+        </select>
       </div>
-  
-      <!-- 筛选区域 -->
-      <!-- 筛选区域（带文字标签） -->
-<div class="filter-bar">
-  <div class="filter-group">
-    <label class="filter-label">类型：</label>
-    <select v-model="selectedGenre" class="filter-select">
-      <option value="">全部类型</option>
-      <option value="科幻">科幻</option>
-      <option value="奇幻">奇幻</option>
-      <option value="历史">历史</option>
-      <option value="犯罪">犯罪</option>
-      <option value="剧情">剧情</option>
-      <option value="悬疑">悬疑</option>
-      <option value="古装">古装</option>    
-    </select>
-  </div>
 
-  <div class="filter-group">
-    <label class="filter-label">最低评分：</label>
-    <input
-      v-model.number="minRating"
-      type="number"
-      class="filter-input"
-      min="0"
-      max="10"
-      step="0.1"
-    />
-  </div>
+      <div class="filter-group">
+        <label class="filter-label">最低评分：</label>
+        <input v-model.number="minRating" type="number" class="filter-input" min="0" max="10" step="0.1" />
+      </div>
 
-  <div class="filter-group">
-    <label class="filter-label">年份范围：</label>
-    <input
-      v-model.number="startYear"
-      type="number"
-      class="filter-input year-input"
-      min="1900"
-      max="2100"
-    />
-    <span style="margin: 0 0.3rem">~</span>
-    <input
-      v-model.number="endYear"
-      type="number"
-      class="filter-input year-input"
-      min="1900"
-      max="2100"
-    />
-  </div>
-</div>
+      <div class="filter-group">
+        <label class="filter-label">年份范围：</label>
+        <input v-model.number="startYear" type="number" class="filter-input year-input" min="1900" max="2100" />
+        <span style="margin: 0 0.3rem">~</span>
+        <input v-model.number="endYear" type="number" class="filter-input year-input" min="1900" max="2100" />
+      </div>
 
-      <!-- 电影列表 -->
-      <div class="movie-list">
-        <div v-for="movie in filteredMovies" :key="movie.title" class="movie-card">
-          <div class="movie-meta">
-            <h2 class="movie-title">{{ movie.title }}</h2>
-            <span>导演：{{ movie.director }}</span>
-            <span>主演：{{ movie.actors.join('、') }}</span>
-            <span>类型：{{ movie.genre }}</span>
-            <span>年份：{{ movie.releaseYear }}</span>
-            <span>评分：{{ movie.rating }}</span>
+      <div class="filter-group">
+        <label class="filter-label">排序方式：</label>
+        <select v-model="sortField" class="filter-select">
+          <option value="title">电影名称</option>
+          <option value="release_date">上映日期</option>
+          <option value="total_box_office">票房</option>
+        </select>
+        <select v-model="sortOrder" class="filter-select">
+          <option value="asc">升序</option>
+          <option value="desc">降序</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 电影列表 -->
+    <div class="movie-list">
+      <div v-for="movie in filteredMovies" :key="movie.movie_id" class="movie-card">
+        <div class="movie-header">
+          <h2 class="movie-title">{{ movie.title }}</h2>
+          <div class="movie-subinfo">
+            <span>上映：{{ movie.release_date }}</span>
+            <span>票房：{{ formatBoxOffice(movie.total_box_office) }} 亿</span>
+            <span class="stars">
+              <template v-for="i in 5">
+                <i
+                  class="star"
+                  :class="{
+                    filled: i <= Math.floor(movie.overall_rating / 2),
+                    half: i === Math.ceil(movie.overall_rating / 2) && movie.overall_rating % 2 >= 1
+                  }"
+                ></i>
+              </template>
+              <span class="rating-number">({{ movie.overall_rating }})</span>
+            </span>
           </div>
-          <p class="movie-description">简介：{{ movie.description }}</p>
+        </div>
+
+        <div class="movie-body">
+          <div class="meta-row"><span class="label">🎬 导演：</span><span class="value">{{ movie.directors.join('、') }}</span></div>
+          <div class="meta-row"><span class="label">⭐ 主演：</span><span class="value">{{ movie.main_actors.join('、') }}</span></div>
+          <div class="meta-row"><span class="label">📂 类型：</span><span class="value">{{ movie.genres.join('、') }}</span></div>
+          <div class="meta-row">
+            <span class="label">📖 简介：</span>
+            <span class="value">
+              <div :class="['movie-summary', expandedSummaries[movie.movie_id] ? 'expanded' : 'collapsed']">
+                {{ movie.description || '暂无简介。' }}
+              </div>
+              <button
+                v-if="movie.description && movie.description.length > 60"
+                class="toggle-btn"
+                @click="toggleSummary(movie.movie_id)"
+              >
+                {{ expandedSummaries[movie.movie_id] ? '收起' : '展开' }}
+              </button>
+            </span>
+          </div>
+          <div v-if="isAdmin" class="admin-controls">
+          <!-- <div class="admin-controls"> -->
+            <button class="delete-btn" @click="handleDelete(movie.movie_id)">🗑 删除</button>
+          </div>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { ref, computed } from 'vue'
-  
-  const keyword = ref('')
-  const selectedGenre = ref('')
-  const minRating = ref(0)
-  const startYear = ref(2000)
-  const endYear = ref(new Date().getFullYear())
-  
-  const movieList = ref([
-    {
-      title: '流浪地球 2',
-      director: '郭帆',
-      actors: ['吴京', '刘德华', '李雪健'],
-      genre: '科幻',
-      releaseYear: 2023,
-      rating: 8.4,
-      description: '人类面对太阳危机，启动“移山计划”与“月球引爆”，展现家园守护的壮丽史诗。',
-    },
-    {
-      title: '封神第一部',
-      director: '乌尔善',
-      actors: ['费翔', '李雪健', '黄渤'],
-      genre: '奇幻/历史',
-      releaseYear: 2023,
-      rating: 8.0,
-      description: '改编自《封神演义》，讲述姜子牙伐纣助周，众神归位的宏大神话史诗。',
-    },
-    {
-      title: '孤注一掷',
-      director: '申奥',
-      actors: ['张艺兴', '金晨'],
-      genre: '犯罪/剧情',
-      releaseYear: 2023,
-      rating: 7.2,
-      description: '揭示诈骗黑产全链条，以真实案例为蓝本，展现跨国犯罪惊险全过程。',
-    },
-    {
-      title: '满江红',
-      director: '张艺谋',
-      actors: ['沈腾', '易烊千玺'],
-      genre: '悬疑/古装',
-      releaseYear: 2023,
-      rating: 7.8,
-      description: '南宋时期，秦桧议和案中疑云重重，展现爱国情怀与智勇交锋。',
-    },
-  ])
-  
-  const filteredMovies = computed(() =>
-    movieList.value.filter((movie) => {
-      const matchesKeyword = [movie.title, movie.director, ...movie.actors]
-        .join(',')
-        .toLowerCase()
-        .includes(keyword.value.toLowerCase())
-      
-      const matchesGenre =
-      !selectedGenre.value || movie.genre.split('/').includes(selectedGenre.value)
 
-      const matchesRating = movie.rating >= minRating.value
-      const matchesYear =
-      movie.releaseYear >= startYear.value &&
-      movie.releaseYear <= endYear.value
+    <!-- 分页 -->
+    <div class="pagination">
+      <button :disabled="currentPage === 1" @click="currentPage--">&lt; 上一页</button>
+      <span>当前页：{{ currentPage }} / {{ totalPages }}</span>
+      <button :disabled="currentPage === totalPages" @click="currentPage++">下一页 &gt;</button>
+    </div>
+  </div>
+</template>
 
-      return matchesKeyword && matchesGenre && matchesRating && matchesYear
-  })
-)
-  </script>
-  
-  <style scoped>
-  .home-container {
-    padding: 2rem;
-    background-color: #e6e6e61b;
-    min-height: 100vh;
-    border-radius: 10px;
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import axios from 'axios'
+import { currentUser } from '@/stores/user'
+
+const keyword = ref('')
+const selectedGenre = ref('')
+const minRating = ref(0)
+const startYear = ref(2000)
+const endYear = ref(new Date().getFullYear())
+const currentPage = ref(1)
+const pageSize = 10
+const sortField = ref('release_date')
+const sortOrder = ref('desc')
+
+const isAdmin = computed(() => currentUser.value?.user_id === 1)
+
+interface Movie {
+  movie_id: number
+  title: string
+  release_date: string
+  total_box_office: number
+  avg_ticket_price: number
+  country: string
+  overall_rating: number
+  directors: string[]
+  main_actors: string[]
+  genres: string[]
+  description: string
+}
+
+const movieList = ref<Movie[]>([])
+const totalMovies = ref(0)
+
+const fetchMovies = async () => {
+  try {
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize,
+      title: keyword.value,
+      genre: selectedGenre.value,
+      min_rating: minRating.value,
+      start_year: startYear.value,
+      end_year: endYear.value,
+      sort_field: sortField.value,
+      sort_order: sortOrder.value
+    }
+    const response = await axios.get('http://127.0.0.1:4523/m1/6680275-6389502-default/api/user/movies', { params })
+
+    if (response.data.success) {
+      const { total, items } = response.data.data
+      movieList.value = items
+      totalMovies.value = total
+    } else {
+      console.error('获取失败：', response.data.message)
+    }
+  } catch (error) {
+    console.error('请求出错：', error)
   }
-  
-  /* 搜索框样式 */
-  .search-bar {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1rem;
+}
+
+watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortField, sortOrder], fetchMovies, {
+  immediate: true
+})
+
+const expandedSummaries = ref<Record<number, boolean>>({})
+const toggleSummary = (id: number) => {
+  expandedSummaries.value[id] = !expandedSummaries.value[id]
+}
+
+function formatBoxOffice(value: number): string {
+  if (!value || isNaN(value)) return '0.0'
+  return value.toFixed(1)
+}
+
+const handleDelete = async (movieId: number) => {
+  if (!confirm('确认删除这部电影吗？')) return
+  try {
+    const res = await axios.delete(`http://127.0.0.1:4523/m1/6680275-6389502-default/api/admin/movie/${movieId}`)
+    if (res.data.success) {
+      fetchMovies()
+    } else {
+      alert('删除失败：' + res.data.message)
+    }
+  } catch (err) {
+    console.error(err)
+    alert('请求失败，请稍后重试')
   }
-  
-  .search-input {
-    width: 60%;
-    padding: 0.8rem 1.2rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 999px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+}
+
+const totalPages = computed(() => Math.ceil(totalMovies.value / pageSize))
+const filteredMovies = computed(() => movieList.value)
+</script>
+
+<style scoped>
+.admin-controls {
+  text-align: right;
+  margin-top: 1rem;
+}
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.delete-btn:hover {
+  background-color: #dc2626;
+}
+
+
+
+/* 动画定义 */
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .search-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* 筛选栏样式 */
-  .filter-bar {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  .filter-select,
-  .filter-input {
-    padding: 0.6rem 1rem;
-    font-size: 0.95rem;
-    border-radius: 0.5rem;
-    border: 1px solid #ccc;
-    min-width: 140px;
-    transition: border 0.2s ease;
-  }
-  
-  .filter-select:focus,
-  .filter-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-  }
-  .filter-bar {
+}
+
+/* 主体布局 */
+.home-container {
+  padding: 2rem;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeUp 0.6s ease both;
+}
+
+/* 搜索框 */
+.search-bar {
   display: flex;
   justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 60%;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+}
+
+/* 筛选栏 */
+.filter-bar {
+  display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  justify-content: center;
+  gap: 1rem;
   margin-bottom: 2rem;
-  align-items: center;
 }
 
 .filter-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
+  gap: 0.4rem;
 }
 
 .filter-label {
@@ -222,51 +291,179 @@
   text-align: right;
 }
 
+.filter-select,
+.filter-input {
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  min-width: 140px;
+}
+
 .year-input {
   width: 80px;
 }
 
-  /* 电影卡片区域 */
-  .movie-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .movie-card {
-    background-color: #ffffff9b;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.265);
-    transition: transform 0.2s ease;
+/* 卡片列表 */
+.movie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
 
-  }
-  
-  .movie-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 0 5px rgba(109, 109, 109, 0.274);
-    background-color: #ffffff47;
+/* 单个卡片 */
+.movie-card {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeUp 0.5s ease both;
+}
 
+.movie-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 0 0 6px rgba(109, 109, 109, 0.15);
+  background-color: #fdfdfd;
+}
 
-  }
-  
-  .movie-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1.2rem;
-    margin-bottom: 1rem;
-  }
-  
-  .movie-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .movie-description {
-    color: #555;
-    line-height: 1.6;
-  }
-  </style>
-  
+/* 卡片内容 */
+.movie-header {
+  margin-bottom: 1rem;
+}
+
+.movie-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.movie-subinfo {
+  font-size: 0.95rem;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.3rem;
+}
+
+.movie-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.6;
+}
+
+.meta-row .label {
+  font-weight: 600;
+  min-width: 60px;
+  color: #333;
+}
+
+.meta-row .value {
+  flex: 1;
+}
+
+/* 星级评分 */
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 1rem;
+  color: #fbbf24;
+}
+
+.star {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-color: #e5e7eb;
+  mask: url('data:image/svg+xml;utf8,<svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.286 3.97c.3.921-.755 1.688-1.538 1.118l-3.38-2.455a1 1 0 00-1.175 0l-3.38 2.455c-.783.57-1.838-.197-1.538-1.118l1.286-3.97a1 1 0 00-.364-1.118L2.05 9.397c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.97z"/></svg>') center/contain no-repeat;
+}
+
+.star.filled {
+  background-color: #fbbf24;
+}
+
+.star.half {
+  background: linear-gradient(to right, #fbbf24 50%, #e5e7eb 50%);
+}
+
+.rating-number {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 4px;
+}
+
+/* 简介动画 */
+.movie-summary {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #444;
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.movie-summary.collapsed {
+  max-height: 3.2em;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.movie-summary.expanded {
+  max-height: 1000px;
+  transition: max-height 0.6s ease-in;
+}
+
+.toggle-btn {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  color: #409eff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 分页按钮动画 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination button {
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.pagination button:active {
+  transform: scale(0.95);
+}
+
+.pagination button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 0.9rem;
+  color: #444;
+}
+</style>
