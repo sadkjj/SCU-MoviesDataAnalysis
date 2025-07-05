@@ -1,3 +1,7 @@
+DROP DATABASE IF EXISTS movie_db;
+CREATE DATABASE IF NOT EXISTS movie_db;
+USE movie_db;
+
 -- 电影表（movies）
 CREATE TABLE movies (
     movie_id BIGINT NOT NULL PRIMARY KEY,
@@ -64,9 +68,20 @@ CREATE TABLE movie_categories (
     FOREIGN KEY (genre_id) REFERENCES categories(genre_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 电影-时间关联表
+-- 严格降序排序
+CREATE TABLE daily_box_office (
+    movie_id BIGINT NOT NULL,
+    date_time VARCHAR(100),
+    box_office DECIMAL(15,2),
+    attendees BIGINT,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    PRIMARY KEY (movie_id, date_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 用户表（users）
 CREATE TABLE users (
-    user_id BIGINT NOT NULL PRIMARY KEY,
+    user_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     real_name VARCHAR(50),
@@ -191,14 +206,24 @@ INSERT INTO movie_categories (id, movie_id, genre_id) VALUES
 (19, 10, 4),
 (20, 10, 9);
 
-INSERT INTO users (user_id, username, password, real_name, phone, role_type, email, create_time, update_time) VALUES
-(1, 'admin', 'admin123', '系统管理员', '13800138000', 1, 'admin@example.com', '2023-01-01 10:00:00', '2023-01-01 10:00:00'),
-(2, 'john_doe', 'john123', '约翰·多伊', '13912345678', 2, 'john.doe@example.com', '2023-02-15 14:30:00', '2023-02-15 14:30:00'),
-(3, 'jane_smith', 'jane456', '简·史密斯', '13987654321', 2, 'jane.smith@example.com', '2023-03-10 09:15:00', '2023-03-10 09:15:00'),
-(4, 'michael_wang', 'mike789', '王麦克', '13811223344', 2, 'michael.wang@example.com', '2023-04-05 16:45:00', '2023-04-05 16:45:00'),
-(5, 'sarah_li', 'sarah101', '李莎拉', '13755667788', 2, 'sarah.li@example.com', '2023-05-20 11:20:00', '2023-05-20 11:20:00'),
-(6, 'david_zhang', 'david202', '张大卫', '13699887766', 2, 'david.zhang@example.com', '2023-06-12 13:10:00', '2023-06-12 13:10:00'),
-(7, 'emily_chen', 'emily303', '陈艾米丽', '13544556677', 2, 'emily.chen@example.com', '2023-07-08 08:30:00', '2023-07-08 08:30:00'),
-(8, 'robert_liu', 'robert404', '刘罗伯特', '13477889900', 2, 'robert.liu@example.com', '2023-08-25 15:50:00', '2023-08-25 15:50:00'),
-(9, 'lisa_zhao', 'lisa505', '赵丽莎', '13311223344', 2, 'lisa.zhao@example.com', '2023-09-18 10:40:00', '2023-09-18 10:40:00'),
-(10, 'kevin_sun', 'kevin606', '孙凯文', '13255667788', 2, 'kevin.sun@example.com', '2023-10-30 17:25:00', '2023-10-30 17:25:00');
+-- 先设置自增起始值
+ALTER TABLE users AUTO_INCREMENT = 20250001;
+INSERT INTO users (username, password, real_name, phone, role_type, email, create_time, update_time) VALUES
+('admin', 'admin123', '系统管理员', '13800138000', 1, 'admin@example.com', '2023-01-01 10:00:00', '2023-01-01 10:00:00'),
+('john_doe', 'john123', '约翰·多伊', '13912345678', 2, 'john.doe@example.com', '2023-02-15 14:30:00', '2023-02-15 14:30:00'),
+('jane_smith', 'jane456', '简·史密斯', '13987654321', 2, 'jane.smith@example.com', '2023-03-10 09:15:00', '2023-03-10 09:15:00'),
+('michael_wang', 'mike789', '王麦克', '13811223344', 2, 'michael.wang@example.com', '2023-04-05 16:45:00', '2023-04-05 16:45:00'),
+('sarah_li', 'sarah101', '李莎拉', '13755667788', 2, 'sarah.li@example.com', '2023-05-20 11:20:00', '2023-05-20 11:20:00'),
+('david_zhang', 'david202', '张大卫', '13699887766', 2, 'david.zhang@example.com', '2023-06-12 13:10:00', '2023-06-12 13:10:00'),
+('emily_chen', 'emily303', '陈艾米丽', '13544556677', 2, 'emily.chen@example.com', '2023-07-08 08:30:00', '2023-07-08 08:30:00'),
+('robert_liu', 'robert404', '刘罗伯特', '13477889900', 2, 'robert.liu@example.com', '2023-08-25 15:50:00', '2023-08-25 15:50:00'),
+('lisa_zhao', 'lisa505', '赵丽莎', '13311223344', 2, 'lisa.zhao@example.com', '2023-09-18 10:40:00', '2023-09-18 10:40:00'),
+('kevin_sun', 'kevin606', '孙凯文', '13255667788', 2, 'kevin.sun@example.com', '2023-10-30 17:25:00', '2023-10-30 17:25:00');
+
+INSERT INTO daily_box_office(movie_id, date_time, box_office, attendees) VALUES
+(1, '2024-10-03', 123, 123),
+(1, '2024-11-04', 456, 425245),
+(1, '2024-11-05', 789, 25423),
+(2, '2024-11-06', 635, 21341),
+(2, '2024-11-07', 114514, 647568),
+(2, '2025-01-08', 451236, 35754);

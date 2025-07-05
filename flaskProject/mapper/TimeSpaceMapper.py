@@ -7,8 +7,8 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
 
     def get_movie_boxoffices(self, name: str) -> dict:
         query = """(
-            SELECT month_date, box_office FROM movie_time
-            WHERE movie_time.movie_id = (
+            SELECT date_time, box_office FROM daily_box_office
+            WHERE movie_id = (
                 SELECT movie_id FROM movies
                 WHERE movies.title = '{}'
             )
@@ -20,11 +20,11 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
         return {
             "movie": name,
             "status": not df.empty,
-            "times": df['month_date'].values.tolist(),
+            "times": df['date_time'].values.tolist(),
             "box_offices": [float(x) for x in df['box_office']],
         }
 
-    def get_area_data(self, year: int) -> dict:
+    def get_area_data(self, year: int) -> list:
         query = """(
             SELECT m.country, categories.name, COUNT(*) AS count FROM movie_categories
             JOIN (
@@ -55,7 +55,4 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
 
             i = i + 1
 
-        return {
-            'year': year,
-            'area_data': area_data
-        }
+        return area_data
