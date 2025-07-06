@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flaskProject.mapper.PreferenceMapper import PreferenceAnalysisMapper
+from mapper.PreferenceMapper import PreferenceAnalysisMapper
 import logging
 
 preference_bp = Blueprint('preference', __name__)

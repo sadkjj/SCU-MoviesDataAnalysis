@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from flaskProject.mapper.ContentMapper import ContentAnalysisMapper
+from mapper.ContentMapper import ContentAnalysisMapper
 
 content_bp=Blueprint('content', __name__)
 conMapper = ContentAnalysisMapper()

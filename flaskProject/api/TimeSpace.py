@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flaskProject.mapper.TimeSpaceMapper import TimeSpaceAnalysisMapper
+from mapper.TimeSpaceMapper import TimeSpaceAnalysisMapper
 import logging
 
 timespace_bp = Blueprint('timespace', __name__)

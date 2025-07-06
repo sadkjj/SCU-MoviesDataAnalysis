@@ -1,4 +1,4 @@
-import flaskProject.mapper.Mapper as Mapper
+import mapper.Mapper as Mapper
 
 
 class PreferenceAnalysisMapper(Mapper.Mapper):

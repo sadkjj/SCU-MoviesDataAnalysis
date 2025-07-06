@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, avg, desc,expr
 from pyspark.sql.functions import col, lit, when, sum
-from flaskProject.config import Config
+from config import Config
 import json
 
 

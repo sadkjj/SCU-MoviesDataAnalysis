@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from flaskProject.mapper.TeamMapper import TeamAnalysisMapper
+from mapper.TeamMapper import TeamAnalysisMapper
 team_bp = Blueprint('team', __name__)
 teamMapper = TeamAnalysisMapper()
 @team_bp.route('/production-ranking', methods=['GET'])

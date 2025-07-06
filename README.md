@@ -6,7 +6,13 @@
 
 ## 二、项目启动
 
-### 1.数据库连接
+### 1.前端启动
+
+1）npm i
+
+2）npm run dev
+
+### 2.数据库连接
 
 1）在Navicat的mysql连接中创建movie_db数据库
 
@@ -14,7 +20,7 @@
 
 
 
-### 2.后端启动
+### 3.后端启动
 
 1）pycharm打开flaskProject，本地环境：spark-3.2.2+python3.8
 

@@ -1,25 +1,26 @@
-from flask import Flask, render_template, session
+# app.py
+from flask import Flask, jsonify
+from api.Admin import admin_bp
 from api.User import user_bp
-from config import Config
+from api.Basic import basic_bp
+from api.Team import team_bp
+from api.Content import content_bp
+from api.Preference import preference_bp
+from api.TimeSpace import timespace_bp
+from flask_cors import CORS
 
 app = Flask(__name__)
-app.config.from_object(Config)
-app.register_blueprint(user_bp, url_prefix='/api/user')
 
-@app.route('/')
-def home():
-    if 'user_id' in session:
-        return f"欢迎, 用户 {session['user_id']}! <a href='/logout'>登出</a>"
-    return "<a href='/login'>登录</a>"
+# 注册蓝图
+app.register_blueprint(admin_bp)
+app.register_blueprint(user_bp)
+app.register_blueprint(basic_bp)
+app.register_blueprint(team_bp)
+app.register_blueprint(content_bp)
+app.register_blueprint(preference_bp)
+app.register_blueprint(timespace_bp)
+CORS(app, supports_credentials=True)
 
-@app.route('/login')
-def login_page():
-    return render_template('index.html')
-
-@app.route('/logout')
-def logout_page():
-    session.clear()
-    return "已登出 <a href='/login'>重新登录</a>"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
