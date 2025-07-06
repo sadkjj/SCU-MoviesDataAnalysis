@@ -15,5 +15,5 @@ TARGETS = [
 if __name__ == '__main__':
     mapper = Mapper()
     for target in TARGETS:
-        table = mapper.spark.read.format('csv').load(ROOT_DIR + target + ".csv", sep=',', header=True, inferSchema=True)
+        table = mapper.spark.read.format('csv').load(ROOT_DIR + target + ".csv", sep=',', header=True, inferSchema=True, multiline=True, quote='"', escape='"')
         mapper.write_table(table, target)

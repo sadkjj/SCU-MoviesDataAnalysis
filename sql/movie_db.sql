@@ -43,7 +43,7 @@ CREATE TABLE categories (
 
 -- 电影-导演关联表（movie_directors）
 CREATE TABLE movie_directors (
-    id BIGINT NOT NULL PRIMARY KEY,
+    id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     movie_id BIGINT NOT NULL,
     director_id BIGINT NOT NULL,
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
@@ -52,7 +52,7 @@ CREATE TABLE movie_directors (
 
 -- 电影-演员关联表（movie_actors）
 CREATE TABLE movie_actors (
-    id BIGINT NOT NULL PRIMARY KEY,
+    id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     movie_id BIGINT NOT NULL,
     actor_id BIGINT NOT NULL,
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
@@ -61,7 +61,7 @@ CREATE TABLE movie_actors (
 
 -- 电影-类型关联表（movie_categories）
 CREATE TABLE movie_categories (
-    id BIGINT NOT NULL PRIMARY KEY,
+    id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     movie_id BIGINT NOT NULL,
     genre_id BIGINT NOT NULL,
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id),

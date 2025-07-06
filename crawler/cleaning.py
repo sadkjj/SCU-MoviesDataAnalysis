@@ -10,6 +10,7 @@ if __name__ == '__main__':
     director_data = {}
     actor_data = {}
     type_data = {}
+    daily_data_dict = {}
 
     for i, view in douban_data.iterrows():
         tmp_list = [None for _ in range(13)]
@@ -77,6 +78,12 @@ if __name__ == '__main__':
             else:
                 data[view['影片']][11] += float(attendance_rate[:-1])
             data[view['影片']][12] += 1
+
+        if view['日期'] not in daily_data_dict:
+            daily_data_dict[view['日期']] = set()
+        if view['影片'] in daily_data_dict[view['日期']]:
+            continue
+        daily_data_dict[view['日期']].add(view['影片'])
 
         tmp_list = [None for _ in range(4)]
         tmp_list[0] = view['日期']
@@ -177,6 +184,6 @@ if __name__ == '__main__':
     pd.DataFrame(type_df, columns=['genre_id', 'name']).to_csv('data/cleaned/categories.csv', index=False)
     pd.DataFrame(actor_df, columns=['actor_id', 'name']).to_csv('data/cleaned/actors.csv', index=False)
     pd.DataFrame(director_df, columns=['director_id', 'name']).to_csv('data/cleaned/directors.csv', index=False)
-    pd.DataFrame(actor_movie_df, columns=['movie_id', 'actor_id']).to_csv('data/cleaned/movie_actors.csv', index=True)
-    pd.DataFrame(type_movie_df, columns=['movie_id', 'genre_id']).to_csv('data/cleaned/movie_categories.csv', index=True)
-    pd.DataFrame(director_movie_df, columns=['movie_id', 'director_id']).to_csv('data/cleaned/movie_directors.csv', index=True)
+    pd.DataFrame(actor_movie_df, columns=['movie_id', 'actor_id']).to_csv('data/cleaned/movie_actors.csv', index=False)
+    pd.DataFrame(type_movie_df, columns=['movie_id', 'genre_id']).to_csv('data/cleaned/movie_categories.csv', index=False)
+    pd.DataFrame(director_movie_df, columns=['movie_id', 'director_id']).to_csv('data/cleaned/movie_directors.csv', index=False)
