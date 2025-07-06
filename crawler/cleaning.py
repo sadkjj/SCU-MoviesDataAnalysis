@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         data[view['影片']][6] = float(view['总票房（万）'].replace(',', '')) * 10000
         data[view['影片']][7] = view['平均票价']
-        data[view['影片']][8] = view['国家及地区'].split('\n')[0].strip()
+        data[view['影片']][8] = view['国家及地区'].split('\n')[0].strip().split('/')[0].strip()
         data[view['影片']][9] = view['上映日期']
 
     for _, view in maoyan_data.iterrows():
