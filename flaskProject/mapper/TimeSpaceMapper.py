@@ -18,13 +18,11 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
         df = super().read_table(query).toPandas()
 
         return {
-            "movie": name,
-            "status": not df.empty,
             "times": df['date_time'].values.tolist(),
             "box_offices": [float(x) for x in df['box_office']],
         }
 
-    def get_area_data(self, year: int) -> list:
+    def get_area_data(self, year: int) -> dict:
         query = """(
             SELECT m.country, categories.name, COUNT(*) AS count FROM movie_categories
             JOIN (
@@ -55,4 +53,6 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
 
             i = i + 1
 
-        return area_data
+        return {
+            "data": area_data
+        }
