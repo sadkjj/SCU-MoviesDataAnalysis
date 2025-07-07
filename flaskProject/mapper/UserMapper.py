@@ -9,6 +9,25 @@ from config import Config
 class UserMapper(Mapper):
     def __init__(self):
         super().__init__()
+        # 初始化时缓存不常变化的表
+        self._cached_directors = None
+        self._cached_actors = None
+        self._cached_genres = None
+
+    def _get_cached_directors(self):
+        if self._cached_directors is None:
+            self._cached_directors = self.read_table("directors").cache()
+        return self._cached_directors
+
+    def _get_cached_actors(self):
+        if self._cached_actors is None:
+            self._cached_actors = self.read_table("actors").cache()
+        return self._cached_actors
+
+    def _get_cached_genres(self):
+        if self._cached_genres is None:
+            self._cached_genres = self.read_table("categories").cache()
+        return self._cached_genres
 
     def get_user_by_username(self, username):
         """根据用户名获取用户信息"""
@@ -117,52 +136,64 @@ class UserMapper(Mapper):
             sort_field: 排序字段(title/release_date/total_box_office)
             sort_order: True升序，False降序
         """
-        df = self.read_table("movies")  # 读取movies表
+        df = self.read_table("movies").cache()  # 读取movies表
+        try:
+            # 按电影名筛选
+            if title:
+                df = df.filter(F.col("title").contains(title))
 
-        # 按电影名筛选
-        if title:
-            df = df.filter(F.col("title").contains(title))
+            # 按导演筛选
+            if director_id:
+                director_movies = self.read_table("movie_directors") \
+                    .filter(F.col("director_id") == director_id) \
+                    .select("movie_id") \
+                    .distinct() \
+                    .cache()
+                df = df.join(director_movies, "movie_id")
 
-        # 按导演筛选
-        if director_id:
-            movie_directors = self.read_table("movie_directors")
-            director_movies = movie_directors.filter(F.col("director_id") == director_id) \
-                .select("movie_id").distinct()
-            df = df.join(director_movies, "movie_id")
+            # 按类型筛选
+            if genre_id:
+                genre_movies = self.read_table("movie_categories") \
+                    .filter(F.col("genre_id") == genre_id) \
+                    .select("movie_id") \
+                    .distinct() \
+                    .cache()
+                df = df.join(genre_movies, "movie_id")
 
-        # 按类型筛选
-        if genre_id:
-            movie_categories = self.read_table("movie_categories")  # 读取关联表
-            movie_ids = movie_categories.filter(F.col("genre_id") == genre_id) \
-                .select("movie_id").distinct()  # 获取指定类型的所有电影ID
-            df = df.join(movie_ids, "movie_id")  # 内连接获取符合条件的电影
+            # 按最低评分筛选
+            if min_rating > 0:
+                df = df.filter(F.col("overall_rating") >= min_rating)
 
-        # 按最低评分筛选
-        if min_rating > 0:
-            df = df.filter(F.col("overall_rating") >= min_rating)
+            # 排序逻辑
+            if sort_field in ['title', 'release_date', 'total_box_office']:
+                sort_column = F.col(sort_field)
+            else:
+                # 默认按标题升序排序
+                sort_column = F.to_date(F.col('release_date'))
 
-        # 排序逻辑
-        if sort_field in ['title', 'release_date', 'total_box_office']:
-            sort_column = F.col(sort_field)
-        else:
-            # 默认按标题升序排序
-            sort_column = F.to_date(F.col('release_date'))
+            # 添加movie_id作为第二排序条件确保稳定性
+            secondary_sort = F.col("movie_id").asc()
 
-        # 添加movie_id作为第二排序条件确保稳定性
-        secondary_sort = F.col("movie_id").asc()
+            # 应用排序方向
+            df = df.orderBy(sort_column.asc() if sort_order else sort_column.desc(), secondary_sort)
 
-        # 应用排序方向
-        df = df.orderBy(sort_column.asc() if sort_order else sort_column.desc(), secondary_sort)
+            # 使用窗口函数实现分页
+            window = Window.orderBy(sort_column.asc() if sort_order else sort_column.desc(), secondary_sort)  # 创建一个稳定的排序
 
-        # 使用窗口函数实现分页
-        window = Window.orderBy(sort_column.asc() if sort_order else sort_column.desc(), secondary_sort)  # 创建一个稳定的排序
+            paginated_df = df.withColumn("row_num", F.row_number().over(window)) \
+                .filter((F.col("row_num") > (page - 1) * page_size)) \
+                .filter(F.col("row_num") <= page * page_size) \
+                .drop("row_num")
 
-        paginated_df = df.withColumn("row_num", F.row_number().over(window)) \
-            .filter((F.col("row_num") > (page - 1) * page_size)) \
-            .filter(F.col("row_num") <= page * page_size) \
-            .drop("row_num")
+            return paginated_df.collect()
+        finally:
+            # 清理缓存
+            df.unpersist()
+            if director_id:
+                director_movies.unpersist()
+            if genre_id:
+                genre_movies.unpersist()
 
-        return paginated_df.collect()
 
     def get_movie_count(self, title=None, genre_id=None, director_id=None, min_rating=0):
         """获取电影总数"""
@@ -183,23 +214,49 @@ class UserMapper(Mapper):
 
         return df.count()
 
-    def get_movie_directors(self, movie_id):
-        """获取电影导演列表"""
-        df = self.read_table("movie_directors").filter(F.col("movie_id") == movie_id)
-        directors = self.read_table("directors")
-        return df.join(directors, "director_id").select("name").collect()
+    def get_movies_directors(self, movie_ids):
+        """批量获取导演信息(使用缓存)"""
+        if not movie_ids:
+            return {}
 
-    def get_movie_actors(self, movie_id):
-        """获取电影演员列表"""
-        df = self.read_table("movie_actors").filter(F.col("movie_id") == movie_id)
-        actors = self.read_table("actors")
-        return df.join(actors, "actor_id").select("name").collect()
+        directors = self._get_cached_directors()
+        result = self.read_table("movie_directors") \
+            .filter(F.col("movie_id").isin(movie_ids)) \
+            .join(directors, "director_id") \
+            .groupBy("movie_id") \
+            .agg(F.collect_list("name").alias("directors")) \
+            .collect()
 
-    def get_movie_genres(self, movie_id):
-        """获取电影类型列表"""
-        df = self.read_table("movie_categories").filter(F.col("movie_id") == movie_id)
-        genres = self.read_table("categories")
-        return df.join(genres, "genre_id").select("name").collect()
+        return {row.movie_id: row.directors for row in result}
+
+    def get_movies_actors(self, movie_ids):
+        """批量获取多部电影的演员"""
+        if not movie_ids:
+            return {}
+
+        actors = self._get_cached_actors()
+        movie_actors = self.read_table("movie_actors")
+        result = movie_actors.filter(F.col("movie_id").isin(movie_ids)) \
+            .join(actors, "actor_id") \
+            .groupBy("movie_id") \
+            .agg(F.collect_list("name").alias("actors"))
+
+        return {row.movie_id: row.actors for row in result.collect()}
+
+    def get_movies_genres(self, movie_ids):
+        """批量获取多部电影的类型"""
+        if not movie_ids:
+            return {}
+
+        movie_categories = self.read_table("movie_categories")
+        categories = self._get_cached_genres()
+
+        result = movie_categories.filter(F.col("movie_id").isin(movie_ids)) \
+            .join(categories, "genre_id") \
+            .groupBy("movie_id") \
+            .agg(F.collect_list("name").alias("genres"))
+
+        return {row.movie_id: row.genres for row in result.collect()}
 
     def get_movie_director_by_name(self, name):
         """根据导演名获取id"""
