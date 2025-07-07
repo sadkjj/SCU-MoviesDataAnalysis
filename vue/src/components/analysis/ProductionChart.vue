@@ -83,12 +83,12 @@ interface CountryProductionData {
 }
 
 // 请求参数
-const startYear = ref(2018)
+const startYear = ref(2000)
 const endYear = ref(2023)
 const selectedCountry = ref('')
 const selectedMonthCountry = ref('')
-const selectedMonthYear = ref(2023)
-const selectedRegionYear = ref(2023)
+const selectedMonthYear = ref(1994)
+const selectedRegionYear = ref(1994)
 
 // 数据状态
 const loading = reactive({
@@ -500,7 +500,7 @@ watch(selectedRegionYear, fetchCountryProduction)
 
 .chart-placeholder {
   padding: 2rem;
-  background-color: #fefce8;
+  background-color: #e6f0ff;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;

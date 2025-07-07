@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .section {
-  background-color: #fef2f2;
+  background-color: #e6f0ff;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);

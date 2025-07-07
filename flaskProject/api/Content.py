@@ -5,8 +5,8 @@ content_bp=Blueprint('content', __name__)
 conMapper = ContentAnalysisMapper()
 @content_bp.route('/type_p', methods=['GET'])
 def type_p():
-    start_year = request.args.get('start_year', type=int)
-    end_year = request.args.get('end_year', type=int)
+    start_year = request.args.get('startYear', type=int)
+    end_year = request.args.get('endYear', type=int)
     country = request.args.get('country', type=str)
 
     # 调用Mapper获取原始数据
@@ -25,8 +25,8 @@ def type_p():
 @content_bp.route('/boxOffice', methods=['GET'])
 def type_b():
     # 调用Mapper获取原始数据
-    start_year = request.args.get('start_year', type=int)
-    end_year = request.args.get('end_year', type=int)
+    start_year = request.args.get('startYear', type=int)
+    end_year = request.args.get('endYear', type=int)
 
     raw_data = conMapper.get_type_boxoffice_analysis(start_year, end_year)
 
@@ -51,8 +51,8 @@ def type_b():
     return jsonify(response)
 @content_bp.route('/Type_score', methods=['GET'])
 def Type_score():
-    start_year = request.args.get('start_year', type=int)
-    end_year = request.args.get('end_year', type=int)
+    start_year = request.args.get('startYear', type=int)
+    end_year = request.args.get('endYear', type=int)
     country = request.args.get('country', type=str)
     # 调用Mapper获取原始数据
     raw_data = conMapper.get_type_rating_analysis(start_year, end_year, country)

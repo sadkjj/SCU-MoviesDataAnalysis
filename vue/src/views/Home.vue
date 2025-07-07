@@ -5,9 +5,14 @@
       <input
         v-model="keyword"
         type="text"
-        placeholder="搜索电影名称、导演、演员..."
+        placeholder="搜索电影名称"
         class="search-input"
       />
+      
+      <div class="filter-group">
+        <label class="filter-label">导演：</label>
+        <input v-model="searchDirector" type="text" class="filter-input" placeholder="输入导演名称" />
+      </div>
     </div>
 
     <!-- 筛选区域 -->
@@ -37,6 +42,7 @@
         <span style="margin: 0 0.3rem">~</span>
         <input v-model.number="endYear" type="number" class="filter-input year-input" min="1900" max="2100" />
       </div>
+
 
       <div class="filter-group">
         <label class="filter-label">排序方式：</label>
@@ -124,13 +130,11 @@ const minRating = ref(0)
 const startYear = ref(2000)
 const endYear = ref(new Date().getFullYear())
 const currentPage = ref(1)
-const pageSize = 10
+const pageSize = 5
 const sortField = ref('release_date')
 const sortOrder = ref('desc')
 
-const searchDirector = ref('')
-const genreStartYear = ref(2010)
-const genreEndYear = ref(2023)
+const searchDirector = ref('') // 确保这个变量已经定义
 
 const isAdmin = computed(() => currentUser.value?.role_type === 1)
 
@@ -148,7 +152,8 @@ const fetchMovies = async () => {
       start_year: startYear.value,
       end_year: endYear.value,
       sort_field: sortField.value,
-      sort_order: sortOrder.value
+      sort_order: sortOrder.value,
+      director: searchDirector.value // 添加 director 参数
     }
     const response = await axios.get(`${API_BASE_URL}/api/user/movies`, { params })
 
@@ -182,7 +187,6 @@ const fetchUserAuth = async () => {
   }
 }
 
-
 const expandedSummaries = ref<Record<number, boolean>>({})
 const toggleSummary = (id: number) => {
   expandedSummaries.value[id] = !expandedSummaries.value[id]
@@ -196,7 +200,7 @@ const formatBoxOffice = (value: number): string => {
 const handleDelete = async (movieId: number) => {
   if (!confirm('确认删除这部电影吗？')) return
   try {
-    const res = await axios.delete(`${API_BASE_URL}/api/admin/movie/${movieId}`)
+    const res = await axios.delete(`http://localhost:5000/api/admin/movie/${movieId}`)
     if (res.data.success) {
       fetchMovies()
     } else {
@@ -219,7 +223,7 @@ onMounted(() => {
   })
 })
 
-watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortField, sortOrder], fetchMovies)
+watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortField, sortOrder, searchDirector], fetchMovies) // 添加 searchDirector 到监听列表
 </script>
 
 <style scoped>
@@ -240,8 +244,6 @@ watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortF
   background-color: #dc2626;
 }
 
-
-
 /* 动画定义 */
 @keyframes fadeUp {
   0% {
@@ -257,7 +259,7 @@ watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortF
 /* 主体布局 */
 .home-container {
   padding: 2rem;
-  background-color: #f3f4f6;
+  background-color: #f3f4f68f;
   min-height: 100vh;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -271,19 +273,66 @@ watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortF
   margin-bottom: 1rem;
 }
 
-.search-input {
+/* 统一所有搜索框样式 */
+.search-input, .filter-select, .filter-input {
   width: 60%;
   padding: 0.8rem 1.2rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 0.8rem;
+  background: linear-gradient(
+    to right,
+    rgba(235, 245, 255, 0.9),
+    rgba(220, 238, 255, 0.9)
+  );
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.8),
+    0 2px 8px rgba(100, 150, 255, 0.15);
+  color: #2c5282;
+  transition: all 0.3s ease;
 }
 
-.search-input:focus {
+.search-input::placeholder,
+.filter-select::placeholder,
+.filter-input::placeholder {
+  color: #90cdf4;
+  opacity: 0.8;
+}
+
+.search-input:focus,
+.filter-select:focus,
+.filter-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+  background: linear-gradient(
+    to right,
+    rgba(220, 238, 255, 0.95),
+    rgba(200, 230, 255, 0.95)
+  );
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.9),
+    0 0 0 3px rgba(144, 205, 244, 0.4),
+    0 4px 12px rgba(100, 150, 255, 0.2);
+  border: 1px solid #90cdf4;
+}
+
+.search-input:hover,
+.filter-select:hover,
+.filter-input:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.9),
+    0 4px 12px rgba(100, 150, 255, 0.25);
+}
+
+/* 调整特定输入框宽度 */
+.filter-select,
+.filter-input {
+  min-width: 140px;
+  width: auto;
+}
+
+.year-input {
+  width: 80px;
 }
 
 /* 筛选栏 */
@@ -308,19 +357,6 @@ watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortF
   text-align: right;
 }
 
-.filter-select,
-.filter-input {
-  padding: 0.6rem 1rem;
-  font-size: 0.95rem;
-  border-radius: 0.5rem;
-  border: 1px solid #ccc;
-  min-width: 140px;
-}
-
-.year-input {
-  width: 80px;
-}
-
 /* 卡片列表 */
 .movie-list {
   display: flex;
@@ -328,20 +364,21 @@ watch([keyword, selectedGenre, minRating, startYear, endYear, currentPage, sortF
   gap: 2rem;
 }
 
-/* 单个卡片 */
+/* 修改卡片样式 - 浅蓝色背景，无悬停效果 */
 .movie-card {
-  background-color: white;
+  background-color: #e6f0ff; /* 浅蓝色背景 */
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: none; /* 移除所有过渡效果 */
   animation: fadeUp 0.5s ease both;
 }
 
+/* 移除卡片悬停效果 */
 .movie-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 0 0 6px rgba(109, 109, 109, 0.15);
-  background-color: #fdfdfd;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #e6f0ff; /* 保持与正常状态相同的背景色 */
 }
 
 /* 卡片内容 */

@@ -22,9 +22,12 @@
       </div>
       <div class="filter-group" v-if="rankingFilter.type === 'genre'">
         <label>电影类型：</label>
-        <select v-model="rankingFilter.genre" @change="fetchRankingData">
-          <option v-for="g in availableGenres" :value="g" :key="g">{{ g }}</option>
-        </select>
+        <input
+          v-model="rankingFilter.genre"
+          type="text"
+          @change="fetchRankingData"
+          placeholder="输入电影类型"
+        >
       </div>
       <div class="filter-group">
         <label>显示数量：</label>
@@ -53,14 +56,11 @@ import { API_BASE_URL } from '@/api'
 // 图表DOM引用
 const rankingChart = ref<HTMLElement | null>(null)
 
-// 可用电影类型
-const availableGenres = ref(['动作', '喜剧', '科幻', '爱情', '悬疑'])
-
 // 筛选条件
 const rankingFilter = ref({
   type: 'total',  // total/yearly/genre
   year: new Date().getFullYear(),
-  genre: availableGenres.value[0],
+  genre: '',
   limit: 10
 })
 
@@ -102,7 +102,7 @@ const handleRankingTypeChange = () => {
   if (rankingFilter.value.type === 'yearly') {
     rankingFilter.value.year = new Date().getFullYear()
   } else if (rankingFilter.value.type === 'genre') {
-    rankingFilter.value.genre = availableGenres.value[0]
+    rankingFilter.value.genre = ''
   }
   fetchRankingData()
 }
@@ -110,7 +110,7 @@ const handleRankingTypeChange = () => {
 // 处理年份输入
 const handleYearInput = () => {
   const currentYear = new Date().getFullYear()
-  if (rankingFilter.value.year < 1900) {
+  if (rankingFilter.value.year < 1800) {
     rankingFilter.value.year = 1900
   } else if (rankingFilter.value.year > currentYear) {
     rankingFilter.value.year = currentYear
@@ -133,24 +133,33 @@ const fetchRankingData = async () => {
     }
 
     const { data } = await axios.get<RankingData>(
-      `http://localhost:5000/boxOffice`,
+      `${API_BASE_URL}/api/basic/boxoffice/ranking`,
       { params }
     )
 
     if (data.success && rankingChartInstance) {
-      const chartData = data.data.map(item => ({
+      // 按票房从高到低排序
+      const sortedData = [...data.data].sort((a, b) => b.box_office - a.box_office)
+      
+      // 重新计算排名（可选）
+      sortedData.forEach((item, index) => {
+        item.rank = index + 1
+      })
+
+      const chartData = sortedData.map(item => ({
         name: item.title,
         value: item.box_office,
         itemStyle: {
           color: getColorByRank(item.rank)
-        }
+        },
+        meta: item // 保存完整数据用于tooltip
       }))
 
       rankingChartInstance.setOption({
         tooltip: {
           trigger: 'item',
           formatter: (params: any) => {
-            const dataItem = data.data[params.dataIndex]
+            const dataItem = params.data.meta
             return `
               <strong>${dataItem.title}</strong><br/>
               排名: 第${dataItem.rank}名<br/>
@@ -177,7 +186,8 @@ const fetchRankingData = async () => {
             formatter: (value: string) => {
               return value.length > 10 ? value.substring(0, 10) + '...' : value
             }
-          }
+          },
+          inverse: true // 使图表从上到下显示
         },
         series: [{
           type: 'bar',
@@ -239,7 +249,6 @@ onMounted(() => {
   fetchRankingData()
 })
 </script>
-
 <style scoped>
 .dashboard-container {
   padding: 20px;
@@ -283,12 +292,12 @@ onMounted(() => {
 }
 
 .filter-group input {
-  width: 80px;
+  width: 120px;
 }
 
 .chart-card {
   margin-bottom: 30px;
-  background: white;
+  background-color: #e6f0ff;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
