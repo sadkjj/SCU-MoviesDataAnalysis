@@ -92,7 +92,7 @@ const fetchData = async () => {
     }
 
     const { data } = await axios.get<ApiResponse>(
-      `${API_BASE_URL}/type_p`,
+      `http://localhost:5000/type_p`,
       { params }
     )
 
@@ -206,7 +206,7 @@ const updateChart = (chartData: GenreData[]) => {
 <style scoped>
 .chart-placeholder {
   padding: 2rem;
-  background-color: #fefce8;
+  background-color: #e6f0ff;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;

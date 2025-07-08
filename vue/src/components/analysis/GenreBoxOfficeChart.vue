@@ -6,16 +6,20 @@
     <div class="filter-container">
       <div class="filter-group">
         <label>起始年份：</label>
-        <select v-model="startYear">
-          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="startYear" 
+          type="number" 
+          @change="validateYears"
+        >
       </div>
 
       <div class="filter-group">
         <label>终止年份：</label>
-        <select v-model="endYear">
-          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="endYear" 
+          type="number" 
+          @change="validateYears"
+        >
       </div>
 
       <div class="filter-group">
@@ -43,12 +47,11 @@ let chartInstance: echarts.ECharts | null = null
 // 筛选条件
 const startYear = ref(2020)
 const endYear = ref(2023)
-const yearRange = Array.from({ length: 16 }, (_, i) => 2010 + i)
 
 // 状态管理
 const loading = ref(false)
 const errorMessage = ref('')
-const unit = ref('亿元') // 修改为亿元单位
+const unit = ref('亿元')
 
 // 接口响应类型
 interface GenreAnalysis {
@@ -75,22 +78,33 @@ const initChart = () => {
   }
 }
 
+// 年份验证
+const validateYears = () => {
+  // 最大年份限制
+  if (endYear.value > 2025) {
+    endYear.value = 2025
+  }
+  
+  // 起始年份不能大于终止年份
+  if (startYear.value > endYear.value) {
+    errorMessage.value = '起始年份不能大于终止年份'
+  } else {
+    errorMessage.value = ''
+    fetchData()
+  }
+}
+
 // 元转亿元并保留两位小数
 const yuanToYi = (value: number): number => {
-  return parseFloat((value / 100000000).toFixed(2))
+  return parseFloat((value / 100000000).toFixed(1))
 }
 
 // 获取数据
 const fetchData = async () => {
   try {
+    
     loading.value = true
     errorMessage.value = ''
-
-    // 参数验证
-    if (startYear.value > endYear.value) {
-      errorMessage.value = '起始年份不能大于终止年份'
-      return
-    }
 
     const params = {
       startYear: startYear.value,
@@ -103,6 +117,8 @@ const fetchData = async () => {
     )
 
     if (data.code === 200) {
+      console.log(data);
+      
       updateChart(data.data.analysis)
     } else {
       errorMessage.value = data.message || '获取数据失败'
@@ -248,7 +264,7 @@ onMounted(() => {
 <style scoped>
 .chart-placeholder {
   padding: 2rem;
-  background-color: #fefce8;
+  background-color: #e6f0ff;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
@@ -267,7 +283,8 @@ onMounted(() => {
   gap: 1.5rem;
   padding: 1rem 1.5rem;
   margin-bottom: 1.5rem;
-  background-color: #fff8dc;
+  background-color: #e6f0ff;
+  border: 1px solid #b9ceeeee;
   border-radius: 0.75rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
@@ -286,8 +303,9 @@ onMounted(() => {
   text-align: right;
 }
 
-.filter-group select {
+.filter-group input {
   padding: 0.4rem 0.75rem;
+  width: 80px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   background-color: #fff;
@@ -296,7 +314,7 @@ onMounted(() => {
   transition: border 0.3s, box-shadow 0.3s;
 }
 
-.filter-group select:focus {
+.filter-group input:focus {
   outline: none;
   border-color: #facc15;
   box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.3);

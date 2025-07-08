@@ -151,7 +151,11 @@ const fetchMovieData = async () => {
   try {
     loading.value = true
     errorMessage.value = ''
-
+    const params= {
+          movie_name: movieName.value.trim()
+        }
+        console.log(params);
+        
     const { data } = await axios.get<MovieData>(
       `${API_BASE_URL}/timeline`,
       {
@@ -160,7 +164,8 @@ const fetchMovieData = async () => {
         }
       }
     )
-
+      console.log(data);
+      
     // 直接渲染返回的数据，不做额外验证
     renderChart(data)
   } catch (error) {
@@ -181,7 +186,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .section {
-  background-color: #fef9c3;
+  background-color: #e6f0ff;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);

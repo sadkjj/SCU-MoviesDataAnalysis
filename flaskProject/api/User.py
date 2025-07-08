@@ -276,30 +276,31 @@ def get_movies():
             director_id=director_id,
             min_rating=min_rating
         )
+        # 批量获取关联数据
+        movie_ids = [m.movie_id if hasattr(m, 'movie_id') else m['movie_id'] for m in movies]
+
+        directors_map = user_mapper.get_movies_directors(movie_ids)
+        actors_map = user_mapper.get_movies_actors(movie_ids)
+        genres_map = user_mapper.get_movies_genres(movie_ids)
 
         # 格式化返回结果
         movie_list = []
         for movie in movies:
-            if hasattr(movie, 'asDict'):
-                movie = movie.asDict()
-
-            # 获取导演和演员信息
-            directors = user_mapper.get_movie_directors(movie['movie_id'])
-            actors = user_mapper.get_movie_actors(movie['movie_id'])
-            genres = user_mapper.get_movie_genres(movie['movie_id'])
+            movie_dict = movie.asDict() if hasattr(movie, 'asDict') else dict(movie)
+            mid = movie_dict['movie_id']
 
             movie_list.append({
-                "movie_id": movie['movie_id'],
-                "title": movie['title'],
-                "release_date": movie.get('release_date', ''),
-                "total_box_office": decimal_to_float(movie.get('total_box_office', 0)),
-                "avg_ticket_price": decimal_to_float(movie.get('avg_ticket_price', 0)),
-                "country": movie.get('country', ''),
-                "overall_rating": decimal_to_float(movie.get('overall_rating', 0)),
-                "directors": [d['name'] for d in directors],
-                "main_actors": [a['name'] for a in actors],
-                "genres": [g['name'] for g in genres],
-                "description": movie.get('description', '')
+                "movie_id": mid,
+                "title": movie_dict['title'],
+                "release_date": movie_dict.get('release_date', ''),
+                "total_box_office": decimal_to_float(movie_dict.get('total_box_office', 0)),
+                "avg_ticket_price": decimal_to_float(movie_dict.get('avg_ticket_price', 0)),
+                "country": movie_dict.get('country', ''),
+                "overall_rating": decimal_to_float(movie_dict.get('overall_rating', 0)),
+                "directors": directors_map.get(mid, []),
+                "main_actors": actors_map.get(mid, []),
+                "genres": genres_map.get(mid, []),
+                "description": movie_dict.get('description', '')
             })
 
         return jsonify({

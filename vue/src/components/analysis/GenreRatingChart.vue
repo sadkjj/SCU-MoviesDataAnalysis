@@ -6,16 +6,20 @@
     <div class="filter-container">
       <div class="filter-group">
         <label>起始年份：</label>
-        <select v-model="startYear">
-          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="startYear" 
+          type="number" 
+          @change="validateYears"
+        >
       </div>
 
       <div class="filter-group">
         <label>终止年份：</label>
-        <select v-model="endYear">
-          <option v-for="year in yearRange" :key="year" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="endYear" 
+          type="number" 
+          @change="validateYears"
+        >
       </div>
 
       <div class="filter-group">
@@ -53,16 +57,16 @@ import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 import axios from 'axios'
 import { API_BASE_URL } from '@/api'
+
 // 图表引用
 const ratingChart = ref<HTMLElement | null>(null)
 let chartInstance: ECharts | null = null
 
 // 筛选条件
-const startYear = ref(2020)
+const startYear = ref(2010)
 const endYear = ref(2023)
 const country = ref('')
 const selectedType = ref('')
-const yearRange = Array.from({ length: 36 }, (_, i) => 1990 + i)
 
 // 数据状态
 const allTypes = ref<string[]>([])
@@ -73,8 +77,8 @@ const loading = ref(false)
 const errorMessage = ref('')
 
 // API接口配置
- const API_URL = `${API_BASE_URL}/Type_score`
-
+//const API_URL = `http://127.0.0.1:4523/m1/6680275-6389502-default/Type_score`
+const API_URL = `http://localhost:5000/Type_score`
 // 接口响应类型
 interface RatingDistribution {
   '0-3': number
@@ -102,45 +106,57 @@ interface ApiResponse {
   }
 }
 
+// 年份验证
+const validateYears = () => {
+  // 终止年份最大不超过当前年份
+  const currentYear = new Date().getFullYear()
+  if (endYear.value > currentYear) {
+    endYear.value = currentYear
+  }
+  
+  // 起始年份不能大于终止年份
+  if (startYear.value > endYear.value) {
+    errorMessage.value = '起始年份不能大于终止年份'
+  } else {
+    errorMessage.value = ''
+  }
+}
+
 // 获取数据
 const fetchData = async () => {
   try {
-    loading.value = true
-    errorMessage.value = ''
+    loading.value = true;
+    errorMessage.value = '';
     
     const params = {
       startYear: startYear.value,
       endYear: endYear.value,
-      country: country.value || undefined // 不传空字符串
-    }
+      country: country.value || undefined
+    };
 
-    const { data } = await axios.get<ApiResponse>(API_URL, { params })
-
+    const { data } = await axios.get<ApiResponse>(API_URL, { params });
+      //console.log(data);
     if (data.code === 200) {
-      rawData.value = data.data.analysis
-      allTypes.value = [...new Set(data.data.analysis.map(item => item.type))]
-      timeRange.value = data.data.timeRange
-      totalMovies.value = data.data.totalMovies
-      drawChart()
+      
+      rawData.value = data.data.analysis;
+      allTypes.value = [...new Set(data.data.analysis.map(item => item.type))];
+      timeRange.value = data.data.timeRange;
+      totalMovies.value = data.data.totalMovies;
+      drawChart();
     } else {
-      return {
-        message: data.message || 'error' // 确保返回message字段
-      }
+      errorMessage.value = data.message || '获取数据失败';
     }
   } catch (error: any) {
-    console.error('请求失败:', error)
-    // 捕获400错误并返回标准格式
-    if (error.response && error.response.status === 400) {
-      return {
-        message: error.response.data.message || 'error'
-      }
+    console.error('请求失败:', error);
+    if (error.response?.status === 400) {
+      errorMessage.value = error.response.data.message || '请求参数错误';
+    } else {
+      errorMessage.value = '请求发生错误';
     }
-    // 其他错误也返回标准格式
-    return {
-      message: 'error'
-    }
+  } finally {
+    loading.value = false;  // 确保无论如何都会重置loading状态
   }
-}
+};
 
 // 绘制图表
 const drawChart = () => {
@@ -246,7 +262,7 @@ onMounted(() => {
 <style scoped>
 .chart-container {
   padding: 2rem;
-  background-color: #fefce8;
+  background-color: #e6f0ff;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -266,9 +282,10 @@ onMounted(() => {
   justify-content: center;
   margin-bottom: 2rem;
   padding: 1rem;
-  background-color: #fff8dc;
-  border: 1px solid #fceabb;
+  background-color: #e6f0ff;
+  border: 1px solid #b9ceeeee;
   border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 /* 单个筛选项 */
@@ -286,18 +303,22 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.filter-group select,
 .filter-group input {
-  padding: 0.4rem 0.75rem;
-  width: 100%;
+  padding: 0.4rem 0.5rem;  /* 减少左右内边距 */
+  width: 120px;           /* 固定宽度替代100% */
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 6px;
   background-color: #fff;
   transition: border-color 0.2s;
+  margin-right: 12px;     /* 添加右侧间距 */
 }
 
-.filter-group select:focus,
+/* 最后一个输入框不需要右边距 */
+.filter-group:last-child input {
+  margin-right: 0;
+}
+
 .filter-group input:focus {
   outline: none;
   border-color: #a78bfa;

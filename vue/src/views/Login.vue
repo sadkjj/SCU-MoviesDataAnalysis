@@ -60,7 +60,7 @@ const handleLogin = async () => {
     }
   } catch (err) {
     console.error('登录请求出错:', err)
-    alert('网络错误或用户名密码不正确')
+    alert('账号未注册或用户名密码不正确')
   }
 }
 </script>

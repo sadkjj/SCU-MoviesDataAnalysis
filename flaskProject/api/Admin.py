@@ -224,3 +224,32 @@ def admin_login():
             "success": False,
             "message": f"服务器错误: {str(e)}"
         }), 500
+
+
+@admin_bp.route('/movie/<movie_id>', methods=['DELETE'])
+def delete_movie(movie_id):
+    if mapper.get_movie_by_id(movie_id) is None:
+        return jsonify({
+            "success": False,
+            "message": "电影不存在"
+        })
+    try:
+        result = mapper.delete_movie(movie_id)
+        if result:
+            logger.info(f"电影删除成功: movie_id={movie_id}")
+            return jsonify({
+                "success": True,
+                "message": "电影删除成功"
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": "电影删除失败"
+            }), 400
+
+    except Exception as e:
+        logger.error(f"删除电影错误: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"服务器错误: {str(e)}"
+        }), 500

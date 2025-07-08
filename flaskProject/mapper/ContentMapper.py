@@ -15,52 +15,64 @@ class ContentAnalysisMapper:
         self.movie_table = "movies"  # 假设电影数据表名
         self.director_table = "directors"  # 导演表
         self.actor_table = "actors"  # 演员表
+        self.rating_bins = [(0, 3), (3, 6), (6, 7), (7, 8), (8, 9), (9, 10)]
 
     def get_type_distribution_analysis(self, start_year=None, end_year=None, country=None):
-        query = """
-            (SELECT 
-                c.name as genre,
-                COUNT(mc.movie_id) as count
-            FROM movie_categories mc
-            JOIN categories c ON mc.genre_id = c.genre_id
-            JOIN movies m ON mc.movie_id = m.movie_id
-        """
+        try:
+            # 基础查询模板（使用MySQL 8.0特性）
+            base_query = """
+                   WITH filtered_movies AS (
+                       SELECT m.movie_id 
+                       FROM movies m
+                       WHERE m.overall_rating IS NOT NULL
+                       {date_condition}
+                       {country_condition}
+                   )
+                   SELECT 
+                       c.name AS genre,
+                       COUNT(DISTINCT fm.movie_id) AS count,
+                       ROUND(COUNT(DISTINCT fm.movie_id) * 100.0 / 
+                           (SELECT COUNT(DISTINCT movie_id) FROM filtered_movies), 2) AS percentage
+                   FROM filtered_movies fm
+                   JOIN movie_categories mc ON fm.movie_id = mc.movie_id
+                   JOIN categories c ON mc.genre_id = c.genre_id
+                   GROUP BY c.genre_id, c.name
+                   ORDER BY count DESC
+               """
 
-        conditions = []
-        if start_year:
-            conditions.append(f"CAST(SUBSTRING(m.release_date, 1, 4) AS INT) >= {start_year}")
-        if end_year:
-            conditions.append(f"CAST(SUBSTRING(m.release_date, 1, 4) AS INT) <= {end_year}")
-        if country:
-            conditions.append(f"m.country = '{country}'")
+            # 构建条件
+            date_condition = ""
+            if start_year and end_year:
+                date_condition = f"AND YEAR(m.release_date) BETWEEN {start_year} AND {end_year}"
+            elif start_year:
+                date_condition = f"AND YEAR(m.release_date) >= {start_year}"
+            elif end_year:
+                date_condition = f"AND YEAR(m.release_date) <= {end_year}"
 
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
+            country_condition = f"AND m.country = '{country}'" if country else ""
 
-        query += " GROUP BY c.genre_id, c.name) as type_distribution"
+            # 格式化最终查询
+            final_query = base_query.format(
+                date_condition=date_condition,
+                country_condition=country_condition
+            )
 
-        # 执行查询
-        df = self.spark.read.format("jdbc") \
-            .option("url", self.url) \
-            .option("driver", self.driver) \
-            .option("dbtable", query) \
-            .option("user", self.user) \
-            .option("password", self.password) \
-            .load()
+            # 执行查询（使用query参数）
+            df = self.spark.read.format("jdbc") \
+                .option("url", self.url) \
+                .option("driver", self.driver) \
+                .option("query", final_query) \
+                .option("user", self.user) \
+                .option("password", self.password) \
+                .load()
 
-        # 计算总数和百分比
-        total = df.agg({"count": "sum"}).collect()[0][0]
-        result_df = df.withColumn("percentage", (col("count") / lit(total)) * 100) \
-            .orderBy(desc("count")) \
-            .select(
-            col("genre"),
-            col("count").cast("int"),
-            col("percentage").cast("float")
-        )
+            # 转换为所需格式
+            return [row.asDict() for row in df.collect()]
 
-        # 转换为JSON格式
-        json_results = result_df.toJSON().collect()
-        return [json.loads(item) for item in json_results]
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return []
 
     def get_type_boxoffice_analysis(self, start_year=None, end_year=None):
         """

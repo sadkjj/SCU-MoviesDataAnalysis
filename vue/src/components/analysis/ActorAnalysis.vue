@@ -1,25 +1,36 @@
 <template>
   <div class="actor-dashboard">
-    <h1>🧑‍🎤 演员数据分析（单人搜索）</h1>
+    <!-- <h1>🧑‍🎤 演员数据分析（单人搜索）</h1> -->
 
     <!-- 筛选条件 -->
     <div class="filter-container">
       <div class="filter-group">
         <label>搜索演员：</label>
-        <input v-model="searchActor" type="text" placeholder="请输入演员姓名" />
+        <input 
+          v-model="searchActor" 
+          type="text" 
+          placeholder="请输入演员姓名" 
+          @keyup.enter="fetchActorData"
+        />
         <button @click="fetchActorData">搜索</button>
       </div>
       <div class="filter-group">
         <label>开始年份：</label>
-        <select v-model="startYear">
-          <option v-for="year in years" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="startYear" 
+          type="number" 
+          min="1900"
+          :max="currentYear"
+        />
       </div>
       <div class="filter-group">
         <label>结束年份：</label>
-        <select v-model="endYear">
-          <option v-for="year in years" :value="year">{{ year }}</option>
-        </select>
+        <input 
+          v-model.number="endYear" 
+          type="number" 
+          min="1900"
+          :max="currentYear"
+        />
       </div>
     </div>
 
@@ -36,15 +47,15 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
 import axios from 'axios'
 import { API_BASE_URL } from '@/api'
 
 const searchActor = ref('')
-const startYear = ref(2010)
+const startYear = ref(1990)
 const endYear = ref(2023)
-const years = Array.from({ length: 20 }, (_, i) => 2005 + i)
+const currentYear = new Date().getFullYear()
 
 const genreChart = ref(null)
 let genreChartInstance = null
@@ -53,6 +64,7 @@ const actorData = ref(null)
 
 const fetchActorData = async () => {
   if (!searchActor.value) return
+  
   try {
     const res = await axios.get(`${API_BASE_URL}/actor`, {
       params: {
@@ -65,12 +77,22 @@ const fetchActorData = async () => {
     updateGenreChart()
   } catch (err) {
     console.error('获取演员数据失败：', err)
+    actorData.value = null
+    clearChart() // 出错时清空图表
   }
 }
 
 const updateGenreChart = () => {
-  if (!actorData.value) return
-  const data = actorData.value.genreStats.map(g => ({ name: g.genre, value: g.count }))
+  if (!actorData.value) {
+    clearChart()
+    return
+  }
+  
+  const data = actorData.value.genreStats?.map(g => ({ 
+    name: g.genre, 
+    value: g.count 
+  })) || []
+  
   const option = {
     tooltip: {
       trigger: 'item',
@@ -99,10 +121,17 @@ const updateGenreChart = () => {
       }
     ]
   }
+  
   if (!genreChartInstance && genreChart.value) {
     genreChartInstance = echarts.init(genreChart.value)
   }
   genreChartInstance.setOption(option)
+}
+
+const clearChart = () => {
+  if (genreChartInstance) {
+    genreChartInstance.clear() // 清空图表
+  }
 }
 
 onMounted(() => {
@@ -110,8 +139,6 @@ onMounted(() => {
     genreChartInstance?.resize()
   })
 })
-
-watch([searchActor, startYear, endYear], fetchActorData)
 </script>
 
 <style scoped>
@@ -132,7 +159,7 @@ h1 {
   gap: 15px;
   margin-bottom: 20px;
   padding: 15px;
-  background: #f0fdf4;
+  background-color: #e6f0ff;
   border-radius: 8px;
   flex-wrap: wrap;
   align-items: center;
@@ -141,31 +168,39 @@ h1 {
 .filter-group {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .filter-group label {
-  margin-right: 8px;
   font-size: 0.9rem;
   white-space: nowrap;
+  min-width: 70px;
 }
 
-select, input, button {
+input {
   padding: 8px 12px;
   border-radius: 4px;
   border: 1px solid #dcdfe6;
   background-color: #fff;
-  min-width: 120px;
+  width: 100px;
 }
 
 button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
   background-color: #409EFF;
   color: white;
-  border: none;
   cursor: pointer;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  background-color: #66b1ff;
 }
 
 .chart-card {
-  background-color: #fff;
+  background-color: #e6f0ff;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
@@ -187,7 +222,17 @@ button {
 @media (max-width: 768px) {
   .filter-container {
     flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  input {
+    width: 100%;
+    max-width: 120px;
   }
 
   .chart {

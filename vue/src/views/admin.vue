@@ -94,8 +94,8 @@
           <label>邮箱<input v-model="editForm.email" type="email" /></label>
           <label>身份
             <select v-model="editForm.role_type">
-              <option :value="1">管理员</option>
-              <option :value="2">普通用户</option>
+              <option :value=1>管理员</option>
+              <option :value=2>普通用户</option>
             </select>
           </label>
           <div class="dialog-buttons">
@@ -131,7 +131,7 @@ const fetchUsers = async () => {
     search: search.value
   }
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/admin/user`, { params })
+    const res = await axios.get(`http://localhost:5000/api/admin/users`, { params })
     if (res.data.success) {
       userList.value = res.data.data.items
       total.value = res.data.data.total
@@ -140,6 +140,7 @@ const fetchUsers = async () => {
     }
   } catch (err) {
     console.error('获取用户失败：', err)
+    //console.log(res);
   }
 }
 
@@ -212,8 +213,19 @@ const editForm = reactive({
   role_type: 2 
 })
 
+// const openEditDialog = (user) => {
+//   Object.assign(editForm, user)
+//   showEditDialog.value = true
+// }
+
+
 const openEditDialog = (user) => {
-  Object.assign(editForm, user)
+  editForm.user_id = user.user_id
+  editForm.username = user.username
+  editForm.real_name = user.real_name
+  editForm.phone = user.phone
+  editForm.email = user.email
+  editForm.role_type = user.role_type
   showEditDialog.value = true
 }
 
@@ -223,11 +235,13 @@ const closeEditDialog = () => {
 
 const submitEdit = async () => {
   try {
+    console.log(editForm);
     const res = await axios.put(
-      `${API_BASE_URL}/api/user/${editForm.user_id}`,
+      `${API_BASE_URL}/api/admin/user/${editForm.user_id}`,
       editForm
     )
     if (res.data.success) {
+      console.log(res);
       fetchUsers()
       closeEditDialog()
     }
@@ -241,7 +255,7 @@ const deleteUser = async (id) => {
   if (!confirm('确定要删除该用户吗？')) return
   try {
     const res = await axios.delete(
-      `${API_BASE_URL}/api/user/${id}`
+      `http://localhost:5000/api/admin/user/${id}`
     )
     if (res.data.success) {
       fetchUsers()

@@ -70,7 +70,6 @@ class AdminMapper(Mapper):
         create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
         insert_sql = f"""
             INSERT INTO TABLE users
             SELECT 
@@ -140,6 +139,7 @@ class AdminMapper(Mapper):
             # 执行更新
             affected_rows = update_stmt.executeUpdate()
             connection.close()
+            #print(update_data['role_type'])
 
             return affected_rows > 0
 
@@ -179,7 +179,6 @@ class AdminMapper(Mapper):
             print(f"删除用户时出错: {str(e)}")
             return False
 
-
     # def create_movie(self, movie_data):
     #     """创建电影"""
     #     from pyspark.sql import Row
@@ -197,21 +196,65 @@ class AdminMapper(Mapper):
     #     self.write_table(df, "movies", mode="overwrite")
     #     return True
 
+    def get_movie_by_id(self, movie_id):
+        """根据用户名获取用户信息"""
+        df = self.read_table("movies")
+        movie = df.filter(F.col("movie_id") == movie_id).first()
+        return movie.asDict() if movie else None  # 将Row对象转为字典或返回None
+
     def delete_movie(self, movie_id):
-        """删除电影"""
-        # 删除关联表数据
+        """使用 JDBC 直接连接 MySQL 执行删除（避免 Spark 的 overwrite 问题）"""
         try:
-            self.spark.sql("START TRANSACTION")
-            for table in ["movie_directors", "movie_actors", "movie_categories"]:
-                df = self.read_table(table)  # 读取关联表
-                df = df.filter(F.col("movie_id") != movie_id)
-                self.write_table(df, table, mode="overwrite")
-            # 删除电影主表
-            df = self.read_table("movies")
-            df = df.filter(F.col("movie_id") != movie_id)
-            self.write_table(df, "movies", mode="overwrite")
-            self.spark.sql("COMMIT")
-            return True
-        except:
-            self.spark.sql("ROLLBACK")
-            raise
+            # JDBC 连接配置
+            movie_id = int(movie_id)
+            jdbc_url = Config.MYSQL_URL
+            connection_properties = {
+                "user": Config.MYSQL_USER,
+                "password": Config.MYSQL_PASSWORD,
+                "driver": Config.MYSQL_DRIVER  # "com.mysql.cj.jdbc.Driver"
+            }
+
+            # 创建 JDBC 连接
+            connection = self.spark._jvm.java.sql.DriverManager.getConnection(
+                jdbc_url,
+                connection_properties["user"],
+                connection_properties["password"]
+            )
+
+            # 启用事务（确保原子性）
+            connection.setAutoCommit(False)
+
+            try:
+                # 1. 先删除关联表数据（避免外键约束冲突）
+                for table in ["daily_box_office", "movie_directors", "movie_actors", "movie_categories"]:
+                    delete_stmt = connection.prepareStatement(f"""
+                        DELETE FROM {table} WHERE movie_id = {movie_id}
+                    """)
+                    affected_rows = delete_stmt.executeUpdate()
+                    print(f"表 {table} 删除了 {affected_rows} 行")
+
+                # 2. 再删除主表数据
+                delete_main_stmt = connection.prepareStatement(f"""
+                    DELETE FROM movies WHERE movie_id = {movie_id}
+                """)
+                affected_rows_main = delete_main_stmt.executeUpdate()
+                print(f"主表 movies 删除了 {affected_rows_main} 行")
+
+                # 提交事务
+                connection.commit()
+                return affected_rows_main > 0
+
+            except Exception as e:
+                # 回滚事务（发生错误时撤销所有操作）
+                connection.rollback()
+                print(f"删除失败，已回滚: {str(e)}")
+                return False
+
+            finally:
+                # 关闭连接
+                connection.close()
+
+        except Exception as e:
+            print(f"数据库连接失败: {str(e)}")
+            return False
+

@@ -2,12 +2,18 @@
   <div class="section">
     <h2>🌍 地域分析</h2>
 
-    <!-- 年份选择器 -->
+    <!-- 年份输入框 -->
     <div class="filter-container">
       <label for="year">选择年份：</label>
-      <select v-model="selectedYear" @change="fetchData">
-        <option v-for="year in yearList" :key="year" :value="year">{{ year }}</option>
-      </select>
+      <input
+        v-model.number="selectedYear"
+        type="number"
+        min="2010"
+        :max="currentYear"
+        @change="validateYear"
+        @keyup.enter="fetchData"
+      />
+      <button @click="fetchData">查询</button>
     </div>
 
     <!-- 状态提示 -->
@@ -42,8 +48,8 @@ interface ApiResponse {
 }
 
 // 响应式变量
-const selectedYear = ref<number>(2026)
-const yearList = Array.from({ length: 16 }, (_, i) => 2010 + i)
+const selectedYear = ref<number>(2023)
+const currentYear = new Date().getFullYear()
 const mapChartRef = ref<HTMLDivElement | null>(null)
 const errorMessage = ref<string>('')
 let chartInstance: ECharts | null = null
@@ -58,39 +64,41 @@ onMounted(() => {
   }
 })
 
+// 年份验证
+const validateYear = () => {
+  //if (selectedYear.value < 2010) selectedYear.value = 2010
+  if (selectedYear.value > currentYear) selectedYear.value = currentYear
+}
+
 // 获取数据
 const fetchData = async () => {
   try {
     errorMessage.value = ''
 
-    const { data } = await axios.get<ApiResponse>(
-      //'http://127.0.0.1:4523/m1/6680275-6389502-default/area',
-      'http://localhost:5000/area',
-      {
-        params: {
-          year: selectedYear.value
-        }
+    const response = await axios.get('http://localhost:5000/area', {
+      params: {
+        year: selectedYear.value
       }
-    )
+    })
 
-    // 处理数据
-    const chartData = data.area_data.map(area => ({
+    const areaData = response.data?.data
+    if (!Array.isArray(areaData)) {
+      throw new Error('后端返回的 data 格式不正确')
+    }
+
+    const chartData = areaData.map(area => ({
       name: area.area,
       value: area.type_data.reduce((sum, t) => sum + t.count, 0)
     }))
 
-    // 计算最大值用于视觉映射
     const maxValue = Math.max(...chartData.map(item => item.value), 100)
-
-    // 更新图表
-    updateChart(chartData, maxValue, data.year)
+    updateChart(chartData, maxValue, `${selectedYear.value}`) // 没有 year 字段，直接用选中的年份
   } catch (error) {
     console.error('请求失败:', error)
-    errorMessage.value = '获取数据失败，请检查网络连接'
+    errorMessage.value = '获取数据失败，请检查网络或接口格式'
     clearChart()
   }
 }
-
 // 更新图表
 const updateChart = (data: { name: string; value: number }[], maxValue: number, year: string) => {
   if (!chartInstance) return
@@ -163,11 +171,9 @@ const clearChart = () => {
 }
 </script> 
 
-
-
 <style scoped>
 .section {
-  background-color: #ecfdf5;
+  background-color: #e6f0ff;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -186,18 +192,32 @@ const clearChart = () => {
   color: #065f46;
 }
 
-.filter-container select {
+.filter-container input {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid #d1d5db;
   font-size: 1rem;
-  min-width: 120px;
+  width: 120px;
   transition: border-color 0.3s;
 }
 
-.filter-container select:focus {
+.filter-container input:focus {
   outline: none;
   border-color: #10b981;
+}
+
+.filter-container button {
+  padding: 0.5rem 1rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.filter-container button:hover {
+  background-color: #059669;
 }
 
 .map-chart {
@@ -221,7 +241,7 @@ const clearChart = () => {
     align-items: flex-start;
   }
   
-  .filter-container select {
+  .filter-container input {
     width: 100%;
   }
 }
