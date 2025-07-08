@@ -1,5 +1,7 @@
 import mapper.Mapper as Mapper
 
+SHOW_MOVIE_COUNT: int = 20
+
 
 class TimeSpaceAnalysisMapper(Mapper.Mapper):
     def __init__(self):
@@ -7,19 +9,26 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
 
     def get_movie_boxoffices(self, name: str) -> dict:
         query = """(
-            SELECT date_time, box_office FROM daily_box_office
+            SELECT MIN(date_time) as start_date, MAX(date_time) as end_date, SUM(box_office) as box_office FROM daily_box_office
             WHERE movie_id = (
                 SELECT movie_id FROM movies
                 WHERE movies.title = '{}'
             )
+            GROUP BY WEEK(date_time)
         ) AS subquery
         """.format(name)
 
         df = super().read_table(query).toPandas()
 
+        box_offices = []
+        times = []
+        for i in range(len(df['box_office']) - min(SHOW_MOVIE_COUNT, len(df['box_office'])), len(df['box_office'])):
+            times.append("{} 至 {}".format(df['start_date'][i], df['end_date'][i]))
+            box_offices.append(float(df['box_office'][i]))
+
         return {
-            "times": df['date_time'].values.tolist(),
-            "box_offices": [float(x) for x in df['box_office']],
+            "times": times,
+            "box_offices": box_offices,
         }
 
     def get_area_data(self, year: int) -> dict:
