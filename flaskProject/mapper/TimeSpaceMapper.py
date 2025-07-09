@@ -40,7 +40,8 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
                 WHERE release_date LIKE '{}%'
             ) AS m ON m.movie_id = movie_categories.movie_id
             JOIN categories ON categories.genre_id = movie_categories.genre_id
-            GROUP BY m.country, categories.name
+            GROUP BY categories.name, m.country
+            ORDER BY m.country
         ) AS subquery
         """.format(year)
 
