@@ -1,6 +1,6 @@
 from flaskProject.mapper.Mapper import Mapper
 
-ROOT_DIR = "crawler/data/cleaned/"
+ROOT_DIR = "data"
 TARGETS = [
     'actors',
     'directors',
