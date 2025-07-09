@@ -15,6 +15,7 @@ class TimeSpaceAnalysisMapper(Mapper.Mapper):
                 WHERE movies.title = '{}'
             )
             GROUP BY WEEK(date_time)
+            ORDER BY WEEK(date_time)
         ) AS subquery
         """.format(name)
 

@@ -16,8 +16,9 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
                 )
             )
             AND date_time >= '{}'
-            AND date_time <= '{}'
+            AND date_time <= '{}-31'
             GROUP BY month_date
+            ORDER BY month_date
         ) AS subquery
         """.format(movie_type, start_month, end_month)
 
@@ -31,8 +32,9 @@ class PreferenceAnalysisMapper(Mapper.Mapper):
     def get_industry_data(self, start_month: str, end_month: str) -> dict:
         query = """(
             SELECT DATE_FORMAT(date_time, '%Y-%m') as month_date, SUM(box_office) as sum FROM daily_box_office
-            WHERE date_time >= '{}' AND date_time <= '{}'
+            WHERE date_time >= '{}' AND date_time <= '{}-31'
             GROUP BY month_date
+            ORDER BY month_date
         ) AS subquery
         """.format(start_month, end_month)
 
