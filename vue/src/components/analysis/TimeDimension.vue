@@ -67,7 +67,7 @@ const renderChart = (data: MovieData) => {
       formatter: (params: any) => {
         return `
           <strong>${params[0].axisValue}</strong><br/>
-          票房: ${params[0].data} 亿
+          票房: ${params[0].data} 万元
         `
       }
     },
@@ -82,7 +82,7 @@ const renderChart = (data: MovieData) => {
     },
     yAxis: {
       type: 'value',
-      name: '票房（亿）',
+      name: '票房（万元）',
       axisLine: {
         show: true
       }
@@ -105,7 +105,7 @@ const renderChart = (data: MovieData) => {
         label: {
           show: true,
           position: 'top',
-          formatter: '{c}亿'
+          formatter: '{c}万元'
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [

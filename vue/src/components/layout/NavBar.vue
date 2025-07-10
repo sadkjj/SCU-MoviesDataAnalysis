@@ -64,6 +64,7 @@ const navItems = [
   { path: '/team', label: '创作团队分析' },
   { path: '/space-time', label: '时空维度分析' },
   { path: '/market', label: '观众与市场分析' },
+  { path:'/aichat', label:'AI聊天助手' },
 ]
 
 const logout = () => {

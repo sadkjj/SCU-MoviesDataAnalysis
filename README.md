@@ -2,6 +2,8 @@
 
 ## 一、项目说明
 
+python爬虫+flask+spark+vue+mysql影业大数据分析
+
 
 
 ## 二、项目启动
@@ -12,19 +14,17 @@
 
 2）npm run dev
 
-### 2.数据库连接
+### 2.数据库连接和建库
 
 1）在Navicat的mysql连接中创建movie_db数据库
 
 2）右键movie_db，选择Execute SQL File，选择/SCU-MoviesDataAnalysis/sql中的movie_db.sql
 
-
-
 ### 3.后端启动
 
 1）pycharm打开flaskProject，本地环境：spark-3.2.2+python3.8
 
-2）工作目录下在控制台pip install flask
+2）对于flaskProject/requirements.txt里需要的环境，工作目录下在控制台pip install
 
 3）把mysql-connector-java包拷贝到spark/jars目录下
 
@@ -42,3 +42,7 @@ class Config:
 ```
 
 把MYSQL_USER和MYSQL_PASSWORD改成本地数据库的用户和密码
+
+### 4. 数据导入
+
+1）运行flaskProject/init_db.py

@@ -18,7 +18,7 @@
   
       <!-- 内容区域 -->
       <div class="content-area">
-        <RatingInsight v-if="currentTab === 'rating'" />
+        <!-- <RatingInsight v-if="currentTab === 'rating'" /> -->
         <MarketTrend v-if="currentTab === 'market'" />
         <PreferenceEvolution v-if="currentTab === 'preference'" />
       </div>

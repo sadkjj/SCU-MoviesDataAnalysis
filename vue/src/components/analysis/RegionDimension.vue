@@ -48,7 +48,7 @@ interface ApiResponse {
 }
 
 // 响应式变量
-const selectedYear = ref<number>(2023)
+const selectedYear = ref<number>(2018)
 const currentYear = new Date().getFullYear()
 const mapChartRef = ref<HTMLDivElement | null>(null)
 const errorMessage = ref<string>('')

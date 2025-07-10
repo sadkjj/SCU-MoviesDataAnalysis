@@ -23,17 +23,22 @@ class BasicMapper(Mapper):
             .orderBy("year").collect()  # 按年份分组计数并排序，返回一个List[pyspark.sql.Row]
 
     def get_monthly_movie_count(self, year, country='all'):
-        """获取月度电影产量"""
+        """获取月度电影产量(过滤掉只有年份信息的记录)"""
         df = self.read_table("movies")
         if country and country.lower() != "all":
             df = df.filter(F.lower(F.col("country")) == country.lower())
 
-        df = df.withColumn("year", F.year(F.to_date("release_date")))
-        df = df.withColumn("month", F.month(F.to_date("release_date")))
+        # 添加日期解析列，并过滤掉只有年份的记录
+        df = df.withColumn("parsed_date", F.to_date("release_date")) \
+            .filter(F.col("parsed_date").isNotNull()) \
+            .filter(F.date_format("parsed_date", "MM-dd") != "01-01")  # 过滤掉1月1日的记录
+
+        df = df.withColumn("year", F.year("parsed_date"))
+        df = df.withColumn("month", F.month("parsed_date"))
 
         return df.filter(F.col("year") == year) \
             .groupBy("month").agg(F.count("*").alias("count")) \
-            .orderBy("month").collect()  # 按月分组计数并排序
+            .orderBy("month").collect()
 
     def get_country_movie_stats(self, year=None):
         """获取国家电影产量统计"""

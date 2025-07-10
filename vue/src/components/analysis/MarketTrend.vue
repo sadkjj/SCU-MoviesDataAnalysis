@@ -63,10 +63,10 @@ const availableMonths = computed(() => {
   return months
 })
 
-// 默认选中最近3个月
+// 默认选中最近5个月
 const defaultStartMonth = computed(() => {
-  if (availableMonths.value.length >= 3) {
-    return availableMonths.value[availableMonths.value.length - 3].value
+  if (availableMonths.value.length >= 6) {
+    return availableMonths.value[availableMonths.value.length - 6].value
   }
   return availableMonths.value[0]?.value || ''
 })
@@ -120,7 +120,12 @@ const fetchData = async () => {
 
   try {
     errorMessage.value = ''
-    
+    const params= {
+        start_month: startMonth.value,
+        end_month: endMonth.value
+      }
+      console.log(params);
+      
     const response = await axios.get(`${API_BASE_URL}/industry`, {
       params: {
         start_month: startMonth.value,

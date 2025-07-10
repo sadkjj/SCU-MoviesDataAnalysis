@@ -80,14 +80,14 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/api'
 
 // 年份和显示数量输入框
-const startYear = ref(1990)
+const startYear = ref(2020)
 const endYear = ref(2023)
 const topN = ref(10)
-const ratingTopN = ref(5)
-const ratingStartYear = ref(1990)
+const ratingTopN = ref(10)
+const ratingStartYear = ref(2020)
 const ratingEndYear = ref(2023)
 const genreDirector = ref('')
-const genreStartYear = ref(1990)
+const genreStartYear = ref(2020)
 const genreEndYear = ref(2023)
 const searchQuery = ref('')
 const filteredDirectors = ref([])

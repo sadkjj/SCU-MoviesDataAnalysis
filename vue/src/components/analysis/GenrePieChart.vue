@@ -48,7 +48,7 @@ const genreChart = ref<HTMLDivElement | null>(null)
 const chartInstance = ref<echarts.ECharts | null>(null)
 
 // 筛选条件
-const startYear = ref<number>(2010)
+const startYear = ref<number>(2020)
 const endYear = ref<number>(2023)
 const country = ref<string>('')
 const errorMessage = ref<string>('')

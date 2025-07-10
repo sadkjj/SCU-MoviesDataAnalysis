@@ -1,6 +1,6 @@
-from flaskProject.mapper.Mapper import Mapper
+from mapper.Mapper import Mapper
 
-ROOT_DIR = "data/"
+ROOT_DIR = "../data/"
 TARGETS = [
     'actors',
     'directors',

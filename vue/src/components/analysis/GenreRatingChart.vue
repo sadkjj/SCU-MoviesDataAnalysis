@@ -63,7 +63,7 @@ const ratingChart = ref<HTMLElement | null>(null)
 let chartInstance: ECharts | null = null
 
 // 筛选条件
-const startYear = ref(2010)
+const startYear = ref(2020)
 const endYear = ref(2023)
 const country = ref('')
 const selectedType = ref('')

@@ -202,7 +202,7 @@ const updateChart = (analysisData: GenreAnalysis[]) => {
         label: {
           show: true,
           position: 'top',
-          formatter: `{c} ${unit.value}`
+          formatter: '{c}' // 移除了单位显示
         }
       },
       { 
@@ -215,7 +215,7 @@ const updateChart = (analysisData: GenreAnalysis[]) => {
         label: {
           show: true,
           position: 'top',
-          formatter: `{c} ${unit.value}`
+          formatter: '{c}' // 移除了单位显示
         }
       },
       { 
@@ -228,7 +228,7 @@ const updateChart = (analysisData: GenreAnalysis[]) => {
         label: {
           show: true,
           position: 'top',
-          formatter: `{c} ${unit.value}`
+          formatter: '{c}' // 移除了单位显示
         }
       },
       { 
@@ -241,7 +241,7 @@ const updateChart = (analysisData: GenreAnalysis[]) => {
         label: {
           show: true,
           position: 'top',
-          formatter: `{c} ${unit.value}`
+          formatter: '{c}' // 移除了单位显示
         }
       }
     ]

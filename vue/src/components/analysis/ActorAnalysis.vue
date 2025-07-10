@@ -53,7 +53,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/api'
 
 const searchActor = ref('')
-const startYear = ref(1990)
+const startYear = ref(2018)
 const endYear = ref(2023)
 const currentYear = new Date().getFullYear()
 

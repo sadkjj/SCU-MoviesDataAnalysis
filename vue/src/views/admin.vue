@@ -8,7 +8,7 @@
       
       <!-- 筛选与排序 -->
       <div class="admin-filters">
-        <input v-model="search" placeholder="搜索用户名/真实姓名/邮箱..." />
+        <input v-model="search" placeholder="搜索用户名" />
         <select v-model="sortField">
           <option value="create_time">注册时间</option>
           <option value="update_time">更新时间</option>
@@ -212,11 +212,6 @@ const editForm = reactive({
   email: null, 
   role_type: 2 
 })
-
-// const openEditDialog = (user) => {
-//   Object.assign(editForm, user)
-//   showEditDialog.value = true
-// }
 
 
 const openEditDialog = (user) => {

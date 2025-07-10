@@ -240,6 +240,8 @@ def get_movies():
         page_size = int(request.args.get('page_size'))
         title = request.args.get('title', '').strip()
         director = request.args.get('director', '').strip()
+        start_year=request.args.get('start_year')
+        end_year=request.args.get('end_year')
         if director == '':
             director = None
         genre = request.args.get('genre').strip()
@@ -250,6 +252,10 @@ def get_movies():
             min_rating = 0
         else:
             min_rating = float(min_rating)
+        if start_year == '':
+            start_year = None
+        if end_year == '':
+            end_year = None
         sort_field = request.args.get('sort_field', 'title')
         sort_order = request.args.get('sort_order', 'desc') == 'asc'
 
@@ -266,7 +272,9 @@ def get_movies():
             director_id=director_id,
             min_rating=min_rating,
             sort_field=sort_field,
-            sort_order=sort_order
+            sort_order=sort_order,
+            start_year=start_year,
+            end_year=end_year
         )
 
         # 获取电影总数
@@ -274,7 +282,9 @@ def get_movies():
             title=title,
             genre_id=genre_id,
             director_id=director_id,
-            min_rating=min_rating
+            min_rating=min_rating,
+            start_year=start_year,
+            end_year=end_year
         )
         # 批量获取关联数据
         movie_ids = [m.movie_id if hasattr(m, 'movie_id') else m['movie_id'] for m in movies]

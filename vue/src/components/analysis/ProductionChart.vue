@@ -3,8 +3,8 @@
     <div class="chart-placeholder">
       <!-- 年度产量筛选器 -->
       <div class="filter-group">
-        <label>起始年份：<input v-model="startYear" type="number" min="2000" max="2025" /></label>
-        <label>结束年份：<input v-model="endYear" type="number" min="2000" max="2025" /></label>
+        <label>起始年份：<input v-model="startYear" type="number" min="2010" max="2025" /></label>
+        <label>结束年份：<input v-model="endYear" type="number" min="2010" max="2025" /></label>
         <label>国家：<input v-model="selectedCountry" type="text" placeholder="输入国家（默认全部）" /></label>
         <button @click="fetchYearlyProduction">更新</button>
       </div>
@@ -16,7 +16,7 @@
 
       <!-- 月度产量筛选器 -->
       <div class="filter-group">
-        <label>年份：<input v-model="selectedMonthYear" type="number" min="2000" max="2025" /></label>
+        <label>年份：<input v-model="selectedMonthYear" type="number" min="2010" max="2025" /></label>
         <label>国家：<input v-model="selectedMonthCountry" type="text" placeholder="输入国家（默认全部）" /></label>
         <button @click="fetchMonthlyProduction">更新</button>
       </div>
@@ -28,7 +28,7 @@
 
       <!-- 国家产量筛选器 -->
       <div class="filter-group">
-        <label>年份：<input v-model="selectedRegionYear" type="number" min="2000" max="2025" /></label>
+        <label>年份：<input v-model="selectedRegionYear" type="number" min="2010" max="2025" /></label>
         <button @click="fetchCountryProduction">更新</button>
       </div>
 
@@ -83,12 +83,12 @@ interface CountryProductionData {
 }
 
 // 请求参数
-const startYear = ref(2000)
+const startYear = ref(2020)
 const endYear = ref(2023)
 const selectedCountry = ref('')
 const selectedMonthCountry = ref('')
-const selectedMonthYear = ref(1994)
-const selectedRegionYear = ref(1994)
+const selectedMonthYear = ref(2020)
+const selectedRegionYear = ref(2020)
 
 // 数据状态
 const loading = reactive({

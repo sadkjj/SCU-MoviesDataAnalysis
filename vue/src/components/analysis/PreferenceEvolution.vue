@@ -73,10 +73,10 @@ const availableMonths = computed(() => {
   return months
 })
 
-// 默认选中最近3个月
+// 默认选中最近5个月
 const defaultStartMonth = computed(() => {
-  if (availableMonths.value.length >= 3) {
-    return availableMonths.value[availableMonths.value.length - 3].value
+  if (availableMonths.value.length >= 6) {
+    return availableMonths.value[availableMonths.value.length - 6].value
   }
   return availableMonths.value[0]?.value || ''
 })
@@ -130,6 +130,13 @@ const fetchData = async () => {
   if (!validateDates()) return
   try {
     errorMessage.value = ''
+    const params= {
+        type: customType.value,
+        start_month: startMonth.value,
+        end_month: endMonth.value
+      }
+      console.log(params);
+      
     const response = await axios.get(`${API_BASE_URL}/preference`, {
       params: {
         type: customType.value,
@@ -146,6 +153,11 @@ const fetchData = async () => {
   }
 }
 
+// 将人次转换为以万为单位并保留2位小数
+const formatAttendees = (attendees: number[]) => {
+  return attendees.map(num => parseFloat((num / 10000).toFixed(2)))
+}
+
 // 渲染图表
 const renderChart = (data: any) => {
   nextTick(() => {
@@ -155,6 +167,9 @@ const renderChart = (data: any) => {
       chartInstance.dispose()
     }
     chartInstance = echarts.init(chart.value)
+
+    // 转换数据为万单位
+    const formattedData = formatAttendees(data.attendees)
 
     chartInstance.setOption({
       title: {
@@ -167,8 +182,7 @@ const renderChart = (data: any) => {
           const index = params[0].dataIndex
           return `
             <div>${data.times[index]}</div>
-            <div style="color:#91cc75">观影人次: ${data.attendees[index]} 万人次</div>
-          `
+            <div style="color:#91cc75">观影人次: ${formattedData[index]} 万人次</div>`
         }
       },
       grid: {
@@ -190,14 +204,17 @@ const renderChart = (data: any) => {
       },
       yAxis: {
         type: 'value',
-        name: '观影人次 (万)',
-        axisLine: { lineStyle: { color: '#91cc75' } }
+        name: '观影人次 (万人次)',
+        axisLine: { lineStyle: { color: '#91cc75' } },
+        axisLabel: {
+          formatter: '{value} 万'
+        }
       },
       series: [
         {
           name: '观影人次',
           type: 'line',
-          data: data.attendees,
+          data: formattedData,
           itemStyle: { color: '#91cc75' },
           smooth: true,
           symbol: 'circle',

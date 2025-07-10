@@ -65,7 +65,7 @@
           <h2 class="movie-title">{{ movie.title }}</h2>
           <div class="movie-subinfo">
             <span>上映：{{ movie.release_date }}</span>
-            <span>票房：{{ formatBoxOffice(movie.total_box_office) }} 亿</span>
+            <span>票房：{{ formatBoxOffice(movie.total_box_office) }} 元</span>
             <span class="stars">
               <template v-for="i in 5">
                 <i

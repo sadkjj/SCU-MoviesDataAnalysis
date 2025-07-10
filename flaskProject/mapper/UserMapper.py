@@ -123,7 +123,7 @@ class UserMapper(Mapper):
             return False
 
     def get_movie_list(self, page=1, page_size=10, title=None, genre_id=None, director_id=None, min_rating=0,
-                       sort_field='release_date', sort_order=False):
+                       sort_field='release_date', sort_order=False, start_year=None, end_year=None):
         """
         获取电影列表
         参数:
@@ -141,6 +141,9 @@ class UserMapper(Mapper):
             # 按电影名筛选
             if title:
                 df = df.filter(F.col("title").contains(title))
+
+            if start_year and end_year:
+                df = df.filter(F.col("release_date").between(start_year, end_year))
 
             # 按导演筛选
             if director_id:
@@ -195,7 +198,7 @@ class UserMapper(Mapper):
                 genre_movies.unpersist()
 
 
-    def get_movie_count(self, title=None, genre_id=None, director_id=None, min_rating=0):
+    def get_movie_count(self, title=None, genre_id=None, director_id=None, min_rating=0, start_year=None, end_year=None):
         """获取电影总数"""
         df = self.read_table("movies")
 
@@ -211,6 +214,8 @@ class UserMapper(Mapper):
             df = df.join(director_movies, "movie_id")
         if min_rating > 0:
             df = df.filter(F.col("overall_rating") >= min_rating)
+        if start_year and end_year:
+            df = df.filter(F.col("release_date").between(start_year, end_year))
 
         return df.count()
 
